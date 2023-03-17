@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:task="http://www.springframework.org/schema/task"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:util="http://www.springframework.org/schema/util"
+	xmlns:mvc="http://www.springframework.org/schema/mvc"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans 
+	http://www.springframework.org/schema/beans/spring-beans.xsd 
+	http://www.springframework.org/schema/context 
+	http://www.springframework.org/schema/context/spring-context.xsd 
+	http://www.springframework.org/schema/mvc 
+	http://www.springframework.org/schema/mvc/spring-mvc.xsd 
+	http://www.springframework.org/schema/task 
+	http://www.springframework.org/schema/task/spring-task.xsd 
+	http://www.springframework.org/schema/util 
+	http://www.springframework.org/schema/util/spring-util.xsd">
+	
+    <!-- 启动注解驱动的spring mvc 功能 -->
+    <mvc:annotation-driven></mvc:annotation-driven>
+	
+    <mvc:interceptors>
+        <bean class="com.hd.microblog.Interceptor.AdminCommonInterceptor"/>
+    </mvc:interceptors>
+	
+    <!-- 启动包扫描功能 -->
+    <context:component-scan base-package="com.hd.microblog.web.controller" />
+	
+	<mvc:view-controller path="/" view-name="forward:/adminindex"/>
+	
+    <mvc:resources mapping="/img/**" location="/WEB-INF/img/" />
+    <mvc:resources mapping="/css/**" location="/WEB-INF/css/" />
+    <mvc:resources mapping="/js/**" location="/WEB-INF/js/" />
+    <!-- <mvc:resources mapping="/upload/**" location="/WEB-INF/upload/" /> -->
+    <!-- ========================= 后台模板静态支持 ========================= -->
+    <mvc:resources mapping="/static/**" location="WEB-INF/static/" />
+    <mvc:resources mapping="/statics/**" location="WEB-INF/statics/" />
+	
+    <bean class="org.springframework.web.servlet.view.BeanNameViewResolver" />
+	
+    <bean class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+		<property name="viewClass" value="org.springframework.web.servlet.view.JstlView"/>
+		<property name="contentType" value="text/html"/>
+		<property name="prefix" value="/WEB-INF/jsp/"/>
+		<property name="suffix" value=".jsp"/>
+	</bean>
+	
+	<!-- 文件上传相关 -->
+    <bean id="multipartResolver" class="org.springframework.web.multipart.commons.CommonsMultipartResolver">
+        <!--one of the properties available;the maximum file size in bytes 设定上传文件最大大小为20兆-->
+        <property name="maxUploadSize" value="20485760"/>
+    </bean>
+	
+    <!--Spring 定时器配置  -->
+    <task:executor id="executor" pool-size="1" />
+	<task:scheduler id="scheduler" pool-size="1" />
+	<task:annotation-driven executor="executor" scheduler="scheduler" />
+	
+</beans>

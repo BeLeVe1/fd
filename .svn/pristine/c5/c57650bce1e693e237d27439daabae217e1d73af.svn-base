@@ -1,0 +1,29 @@
+/**
+ * 
+ */
+package com.hd.common.util;
+
+import java.util.HashMap;
+import java.util.Map;
+
+/**
+ * @author zhanghailong
+ *
+ * @date 2013-8-20 上午11:10:33
+ *
+ * @version 1.0
+ */
+public class OrderStatusUtil {
+	public  Map getMap(String sgcode) {
+		Map map = new HashMap();
+		if (sgcode=="3067") {
+			
+			map.put(0, "未确认");
+			map.put(1, "已确认");
+		}
+		
+		return map;
+		
+	}
+
+}

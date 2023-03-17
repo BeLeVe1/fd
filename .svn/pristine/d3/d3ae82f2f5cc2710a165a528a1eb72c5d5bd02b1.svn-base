@@ -1,0 +1,42 @@
+package com.hd.microblog.service.impl;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.stereotype.Service;
+
+import com.hd.common.dao.IBaseDao;
+import com.hd.common.service.impl.BaseService;
+import com.hd.microblog.dao.dt_predictionDao;
+import com.hd.microblog.model.dt_prediction;
+import com.hd.microblog.service.dt_predictionService;
+@Service("dt_predictionService")
+public class dt_predictionServiceImpl extends BaseService<dt_prediction, Integer> implements dt_predictionService{
+	private dt_predictionDao dt_predictiondao;
+	@Autowired
+	@Qualifier("dt_predictionDao")
+	@Override
+	public void setBaseDao(IBaseDao<dt_prediction, Integer> dt_predictiondao) {
+		this.baseDao = dt_predictiondao;
+		this.dt_predictiondao = (dt_predictionDao) dt_predictiondao;
+	}
+	@Override
+	public List adminfindpredictionlist(Integer start, int number) {
+		// TODO Auto-generated method stub
+		String sql = "select * from dt_prediction where 1=1 ";
+		sql += " limit ?, ? ";
+		List<Object> paramlist = new ArrayList();
+		paramlist.add(start);
+		paramlist.add(number);
+		return dt_predictiondao.exesqlrelist(sql, paramlist);
+	}
+	@Override
+	public List adminfindpredictionlistcount() {
+		// TODO Auto-generated method stub
+		String sql = "select count(*) count from dt_prediction where 1=1 ";
+		return dt_predictiondao.exesqlrelist(sql, null);
+	}
+}

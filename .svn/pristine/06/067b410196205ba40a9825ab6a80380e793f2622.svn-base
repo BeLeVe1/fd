@@ -1,0 +1,21 @@
+package com.hd.common.util;
+
+public class ReplaceJsonUtil {
+	public static String replaceJson(String json){
+		//String replaceone = "\"amount\":[],\"index\":1,\"hasPre\":false,";
+		String replacetwo =",\"context\":{\"total\":0,\"pageCount\":0,\"pageSize\":10}";
+		String replacethree = "\"amount\":[],";
+		String replacefour = "\"hasPre\":false,";
+		 json = json.replace("items", "data");
+		//json = json.replace(replaceone, "");
+		json = json.replace(replacetwo, "");
+		json = json.replace(replacethree, "");
+		json = json.replace(replacefour, "");
+		json = json.replace("\"total\":0,", "");
+		
+		return json;
+		
+	}
+	
+
+}

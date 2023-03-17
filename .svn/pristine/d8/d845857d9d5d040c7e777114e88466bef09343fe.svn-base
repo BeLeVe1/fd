@@ -1,0 +1,235 @@
+//package com.hd.microblog.web.controller.api;
+//
+//import java.io.IOException;
+//import java.io.UnsupportedEncodingException;
+//import java.math.BigInteger;
+//import java.sql.SQLException;
+//import java.text.DecimalFormat;
+//import java.text.SimpleDateFormat;
+//import java.util.ArrayList;
+//import java.util.Calendar;
+//import java.util.Date;
+//import java.util.HashMap;
+//import java.util.List;
+//import java.util.Map;
+//
+//import javax.servlet.http.HttpServletRequest;
+//import javax.servlet.http.HttpServletResponse;
+//import javax.servlet.http.HttpSession;
+//
+//import net.sf.json.JSONArray;
+//import net.sf.json.JSONObject;
+//
+//import org.springframework.beans.factory.annotation.Autowired;
+//import org.springframework.beans.factory.annotation.Qualifier;
+//import org.springframework.stereotype.Controller;
+//import org.springframework.ui.Model;
+//import org.springframework.web.bind.annotation.RequestMapping;
+//import org.springframework.web.bind.annotation.RequestMethod;
+//import org.springframework.web.bind.annotation.ResponseBody;
+//
+//import com.hd.common.util.MD5;
+//import com.hd.microblog.model.dt_admin;
+//import com.hd.microblog.model.dt_information;
+//import com.hd.microblog.model.dt_question;
+//import com.hd.microblog.model.dt_user;
+//import com.hd.microblog.model.dt_usermoney;
+//import com.hd.microblog.model.dt_usertask;
+//import com.hd.microblog.service.dt_adminService;
+//import com.hd.microblog.service.dt_cateService;
+//import com.hd.microblog.service.dt_homeService;
+//import com.hd.microblog.service.dt_informationService;
+//import com.hd.microblog.service.dt_orderService;
+//import com.hd.microblog.service.dt_questionService;
+//import com.hd.microblog.service.dt_userService;
+//import com.hd.microblog.service.dt_usermoneyService;
+//import com.hd.microblog.service.dt_usertaskService;
+//
+//
+//
+//
+//
+//@Controller
+//public class IndexAPIController {
+//	
+//	@Autowired
+//	@Qualifier("dt_adminService")
+//	private dt_adminService dt_adminservice;
+//	@Autowired
+//	@Qualifier("dt_informationService")
+//	private dt_informationService dt_informationservice;
+//	@Autowired
+//	@Qualifier("dt_questionService")
+//	private dt_questionService dt_questionservice;
+//	@Autowired
+//	@Qualifier("dt_cateService")
+//	private dt_cateService dt_cateservice;
+//	@Autowired
+//	@Qualifier("dt_homeService")
+//	private dt_homeService dt_homeservice;
+//	@Autowired
+//	@Qualifier("dt_userService")
+//	private dt_userService dt_userservice;
+//	@Autowired
+//	@Qualifier("dt_usermoneyService")
+//	private dt_usermoneyService dt_usermoneyservice;
+//	@Autowired
+//	@Qualifier("dt_usertaskService")
+//	private dt_usertaskService dt_usertaskservice;
+//	@Autowired
+//	@Qualifier("dt_orderService")
+//	private dt_orderService dt_orderservice;
+//	
+//	//关于我们     商户合作
+//	@RequestMapping(value = "/about", produces = "application/json; charset=utf-8")
+//	@ResponseBody
+//	public String about(HttpServletRequest request, HttpServletResponse resp) throws IOException {
+//		HttpSession session = request.getSession();
+//		resp.setHeader("Access-Control-Allow-Origin", "*");
+//		resp.setHeader("Access-Control-Allow-Methods", "GET,POST");
+//		JSONObject json = new JSONObject();
+//		try {
+//			List informationlist = dt_informationservice.apifindinformation();
+//			dt_information information = (dt_information)informationlist.get(0);
+//			json.put("about", information);
+//			json.put("code", "100");
+//			json.put("rinfo", "查询成功");
+//		} catch (Exception e) {
+//			// TODO: handle exception
+//			e.printStackTrace();
+//			json.put("code", "400");
+//			json.put("rinfo", "系统错误");
+//		}
+//		return json.toString();
+//	}
+//	//常见问题
+//	@RequestMapping(value = "/question", produces = "application/json; charset=utf-8")
+//	@ResponseBody
+//	public String question(HttpServletRequest request, HttpServletResponse resp) throws IOException {
+//		HttpSession session = request.getSession();
+//		resp.setHeader("Access-Control-Allow-Origin", "*");
+//		resp.setHeader("Access-Control-Allow-Methods", "GET,POST");
+//		JSONObject json = new JSONObject();
+//		try {
+//			List questionlist = dt_questionservice.apifindquestionlistdesc();
+//			json.put("question", questionlist);
+//			json.put("code", "100");
+//			json.put("rinfo", "查询成功");
+//		} catch (Exception e) {
+//			// TODO: handle exception
+//			e.printStackTrace();
+//			json.put("code", "400");
+//			json.put("rinfo", "系统错误");
+//		}
+//		return json.toString();
+//	}
+//	//分类
+//	@RequestMapping(value = "/catelist", produces = "application/json; charset=utf-8")
+//	@ResponseBody
+//	public String catelist(HttpServletRequest request, HttpServletResponse resp) throws IOException {
+//		HttpSession session = request.getSession();
+//		resp.setHeader("Access-Control-Allow-Origin", "*");
+//		resp.setHeader("Access-Control-Allow-Methods", "GET,POST");
+//		JSONObject json = new JSONObject();
+//		try {
+//			List catelist = dt_cateservice.apifindcatelist();
+//			json.put("catelist", catelist);
+//			json.put("code", "100");
+//			json.put("rinfo", "查询成功");
+//		} catch (Exception e) {
+//			// TODO: handle exception
+//			e.printStackTrace();
+//			json.put("code", "400");
+//			json.put("rinfo", "系统错误");
+//		}
+//		return json.toString();
+//	}
+//	//主页轮播图
+//	@RequestMapping(value = "/homelist", produces = "application/json; charset=utf-8")
+//	@ResponseBody
+//	public String homelist(HttpServletRequest request, HttpServletResponse resp) throws IOException {
+//		HttpSession session = request.getSession();
+//		resp.setHeader("Access-Control-Allow-Origin", "*");
+//		resp.setHeader("Access-Control-Allow-Methods", "GET,POST");
+//		JSONObject json = new JSONObject();
+//		try {
+//			List homelist = dt_homeservice.apifindhomelist();
+//			json.put("home", homelist);
+//			json.put("code", "100");
+//			json.put("rinfo", "查询成功");
+//		} catch (Exception e) {
+//			// TODO: handle exception
+//			e.printStackTrace();
+//			json.put("code", "400");
+//			json.put("rinfo", "系统错误");
+//		}
+//		return json.toString();
+//	}
+//	//金牌推广
+//	@RequestMapping(value = "/goldpromotion", produces = "application/json; charset=utf-8")
+//	@ResponseBody
+//	public String goldpromotion(HttpServletRequest request, HttpServletResponse resp) throws IOException {
+//		HttpSession session = request.getSession();
+//		resp.setHeader("Access-Control-Allow-Origin", "*");
+//		resp.setHeader("Access-Control-Allow-Methods", "GET,POST");
+//		JSONObject json = new JSONObject();
+//		try {
+//			List list = dt_userservice.apigoldpromotion();
+//			json.put("goldpromotion", list);
+//			json.put("code", "100");
+//			json.put("info", "查询成功");
+//		} catch (Exception e) {
+//			// TODO: handle exception
+//			e.printStackTrace();
+//			json.put("code", "400");
+//			json.put("info", "系统错误");
+//		}
+//		return json.toString();
+//	}
+//	//发布任务消耗金额
+//	@RequestMapping(value = "/taskmoneylist", produces = "application/json; charset=utf-8")
+//	@ResponseBody
+//	public String taskmoneylist(HttpServletRequest request, HttpServletResponse resp) throws IOException {
+//		HttpSession session = request.getSession();
+//		resp.setHeader("Access-Control-Allow-Origin", "*");
+//		resp.setHeader("Access-Control-Allow-Methods", "GET,POST");
+//		JSONObject json = new JSONObject();
+//		try {
+//			List list = dt_usermoneyservice.apitaskmoneylist();
+//			DecimalFormat df = new DecimalFormat("#");
+//			List returnlist  = new ArrayList();
+//			if(list.size()>0){
+//				for(int i=0;i<list.size();i++){
+//					Map map = (Map)list.get(i);
+//					map.put("taskmoney", df.format(Double.valueOf(String.valueOf(map.get("taskmoney")))*100));
+//					returnlist.add(map);
+//				}
+//			}
+//			json.put("taskmoneylist", list);
+//			json.put("code", "100");
+//			json.put("info", "查询成功");
+//		} catch (Exception e) {
+//			// TODO: handle exception
+//			e.printStackTrace();
+//			json.put("code", "400");
+//			json.put("info", "系统错误");
+//		}
+//		return json.toString();
+//	}
+//	//分享
+//	@RequestMapping("/shareindex")
+//	public String shareindex(HttpServletRequest request, HttpServletResponse resp) 
+//			throws IOException {
+//		
+//		return "share/index";
+//	}
+//}
+//
+//
+//
+//
+//
+//
+//
+//
+//

@@ -1,0 +1,303 @@
+package com.hd.microblog.web.controller.weixin;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.net.ConnectException;
+import java.net.URL;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Map.Entry;
+
+import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSocketFactory;
+import javax.net.ssl.TrustManager;
+import javax.servlet.http.HttpServletRequest;
+
+import net.sf.json.JSONException;
+import net.sf.json.JSONObject;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.hd.common.util.StringUtil;
+import com.hd.common.util.XmlUtil;
+
+/**
+ * 公众平台通用接口工具类
+ * 
+ * @author dhzhanghailong
+ *
+ *@date 2014年6月12日 上午11:48:35 
+ */
+public class WeixinUtil {
+	private static Logger log = LoggerFactory.getLogger(WeixinUtil.class);
+
+	/**
+	 * 发起https请求并获取结果
+	 * 
+	 * @param requestUrl 请求地址
+	 * @param requestMethod 请求方式（GET、POST）
+	 * @param outputStr 提交的数据
+	 * @return JSONObject(通过JSONObject.get(key)的方式获取json对象的属性值)
+	 */
+	public static JSONObject httpRequest(String requestUrl, String requestMethod, String outputStr) {
+		JSONObject jsonObject = null;
+		System.setProperty("jsse.enableSNIExtension", "false");
+		StringBuffer buffer = new StringBuffer();
+		try {
+			// 创建SSLContext对象，并使用我们指定的信任管理器初始化
+			TrustManager[] tm = { new MyX509TrustManager() };
+			SSLContext sslContext = SSLContext.getInstance("SSL", "SunJSSE");
+			sslContext.init(null, tm, new java.security.SecureRandom());
+			// 从上述SSLContext对象中得到SSLSocketFactory对象
+			SSLSocketFactory ssf = sslContext.getSocketFactory();
+
+			URL url = new URL(requestUrl);
+			HttpsURLConnection httpUrlConn = (HttpsURLConnection) url.openConnection();
+			httpUrlConn.setSSLSocketFactory(ssf);
+
+			httpUrlConn.setDoOutput(true);
+			httpUrlConn.setDoInput(true);
+			httpUrlConn.setUseCaches(false);
+			// 设置请求方式（GET/POST）
+			httpUrlConn.setRequestMethod(requestMethod);
+
+			if ("GET".equalsIgnoreCase(requestMethod))
+				httpUrlConn.connect();
+
+			// 当有数据需要提交时
+			if (null != outputStr) {
+				OutputStream outputStream = httpUrlConn.getOutputStream();
+				// 注意编码格式，防止中文乱码
+				outputStream.write(outputStr.getBytes("UTF-8"));
+				outputStream.close();
+			}
+
+			// 将返回的输入流转换成字符串
+			InputStream inputStream = httpUrlConn.getInputStream();
+			InputStreamReader inputStreamReader = new InputStreamReader(inputStream, "utf-8");
+			BufferedReader bufferedReader = new BufferedReader(inputStreamReader);
+
+			String str = null;
+			while ((str = bufferedReader.readLine()) != null) {
+				buffer.append(str);
+			}
+			bufferedReader.close();
+			inputStreamReader.close();
+			// 释放资源
+			inputStream.close();
+			inputStream = null;
+			httpUrlConn.disconnect();
+			jsonObject = JSONObject.fromObject(buffer.toString());
+		} catch (ConnectException ce) {
+			log.error("Weixin server connection timed out.");
+		} catch (Exception e) {
+			log.error("https request error:{}", e);
+		}
+		return jsonObject;
+	}
+	// 获取access_token的接口地址（GET） 限200（次/天）
+	public final static String access_token_url = "https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid=APPID&secret=APPSECRET";
+
+	/**
+	 * 获取access_token
+	 * 
+	 * @param appid 凭证
+	 * @param appsecret 密钥
+	 * @return
+	 */
+	public static String getAccessToken(String appid, String appsecret) {
+		
+		AccessToken accessToken = null;
+		//System.out.println(appid+"-------------------"+appsecret);
+		String requestUrl = access_token_url.replace("APPID", appid).replace("APPSECRET", appsecret);
+		JSONObject jsonObject = httpRequest(requestUrl, "GET", null);
+		
+		// 如果请求成功
+		if (null != jsonObject) {
+			try {
+				
+				AccessToken.setToken(jsonObject.getString("access_token"));
+				
+				
+			} catch (JSONException e) {
+				accessToken = null;
+				// 获取token失败
+				log.error("获取token失败 errcode:{} errmsg:{}", jsonObject.getInt("errcode"), jsonObject.getString("errmsg"));
+			}
+		}
+		return jsonObject.getString("access_token");
+	}
+	
+	/**
+	 * 调用微信统一下单接口，返回订单支付信息
+	 * @param request  请求对象
+	 * @param order_code  订单号
+	 * @param amount   订单金额
+	 * @param openId   支付用户的微信号
+	 * @param goods_desc  商品描述
+	 * @param pay_notify  支付结果通知地址
+	 * @return  微信订单支付对象
+	 * @throws Exception
+	 */
+	public static Map<String, String> configPayParam(HttpServletRequest request,String order_code,
+			float amount,String openId, String goods_desc,String pay_notify) throws Exception {
+        String url = "https://api.mch.weixin.qq.com/pay/unifiedorder";
+
+        Map<String, String> params = new HashMap<String, String>();
+        String nonce_str = StringUtil.get32UUID();
+        
+        params.put("appid", ServerConfig.getAPP_ID());
+        params.put("body", goods_desc);
+        params.put("mch_id", ServerConfig.getPartnerId());
+        params.put("nonce_str", nonce_str);
+        
+        params.put("notify_url", pay_notify);
+        
+        //params.put("openid", openId);
+        params.put("out_trade_no", order_code);
+        params.put("spbill_create_ip", IpAndMac.getLocalIP());
+        params.put("total_fee", String.valueOf((int) (amount* 100)));
+
+        params.put("trade_type", "APP");//JSAPI  APP
+
+        String sign = WxSign.createSign(params,ServerConfig.getPartnerSecert());
+
+        params.put("sign", sign);
+
+        log.info("--------------------微信支付页面请求开始---------------------------");
+
+        String xml = configXml(params);
+
+        log.info("签名请求报文：" + xml);
+
+        String result = HttpClientTool.post(url, xml, "utf-8");
+        PayResData payReseData = (PayResData) XmlUtil.getObjectFromXML(result, PayResData.class);
+        System.out.println(result);
+        Map<String, String> payParam = new HashMap<String, String>();
+        payParam.put("appid", payReseData.getAppid());
+        payParam.put("partnerid", ServerConfig.getPartnerId());
+        payParam.put("prepayid", payReseData.getPrepay_id());
+        payParam.put("noncestr", nonce_str);
+        payParam.put("timestamp", String.valueOf(System.currentTimeMillis()/1000));
+        payParam.put("package", "Sign=WXPay");
+        String paySign = WxSign.createSign(payParam,ServerConfig.getPartnerSecert());
+        payParam.put("paySign", paySign);
+        
+        return payParam;
+    }
+	
+	/**
+	 * 调用企业付款接口
+	 * @param request  请求对象
+	 * @param order_code  订单号
+	 * @param amount   订单金额
+	 * @param openId   付款的微信号
+	 * @param goods_desc  描述
+	 * @param pay_notify  支付结果通知地址
+	 * @return  微信订单支付对象
+	 * @throws Exception
+	 */
+	public static Map<String, String> tixian(HttpServletRequest request,String order_code,
+			float amount,String openId, String goods_desc,String ture_name) throws Exception {
+        String url = "https://api.mch.weixin.qq.com/mmpaymkttransfers/promotion/transfers";
+
+        Map<String, String> params = new HashMap<String, String>();
+        String nonce_str = StringUtil.get32UUID();
+        String appId=ServerConfig.getAPP_ID();
+        String mchId=ServerConfig.getPartnerId();
+        String certFilePath=ServerConfig.getPaycertfilepath();
+        String keySecret=ServerConfig.getPartnerSecert();	        
+        
+        //公众账号appid
+        params.put("mch_appid", appId);
+        //商户号
+        params.put("mchid", mchId);
+        //设备号device_info
+        params.put("device_info", "WEB");
+        //随机字符串
+        params.put("nonce_str", nonce_str);
+        //商户订单号
+        params.put("partner_trade_no", order_code);
+        //用户openid 
+        params.put("openid", openId);
+        //校验用户姓名选项
+        params.put("check_name", "NO_CHECK");//NO_CHECK   FORCE_CHECK
+        //收款用户姓名
+        params.put("re_user_name", ture_name);
+        //金额
+        params.put("amount",  String.valueOf((int) (amount* 100)));
+        //企业付款描述信息
+        params.put("desc",goods_desc);
+        //Ip地址
+        params.put("spbill_create_ip", IpAndMac.getLocalIP());
+        //sign
+        String sign = WxSign.createSign(params,keySecret);
+        params.put("sign", sign);
+
+        log.info("--------------------微信tixian请求开始---------------------------");
+
+        String xml = configXml(params);
+
+        log.info("签名请求报文：" + xml);
+
+        
+        String result = HttpsClientTool.post(url, xml, "utf-8",certFilePath,mchId);
+        
+
+        Map<String, String> payParam = new HashMap<String, String>();
+        payParam.put("result", result);
+
+        log.info("返回结果：" + result);
+
+        return payParam;
+    }
+	//支付结果查询
+	public static Map<String, String> wxpayquery(HttpServletRequest request,String order_code) throws Exception {
+        String url = "https://api.mch.weixin.qq.com/pay/orderquery";
+
+        Map<String, String> params = new HashMap<String, String>();
+        String nonce_str = StringUtil.get32UUID();
+        
+        params.put("appid", ServerConfig.getAPP_ID());
+        params.put("mch_id", ServerConfig.getPartnerId());
+        params.put("out_trade_no", order_code);//商户系统内部订单号
+        params.put("nonce_str", nonce_str);
+        String sign = WxSign.createSign(params,ServerConfig.getPartnerSecert());
+        params.put("sign", sign);
+        
+        log.info("--------------------微信扫码支付结果查询---------------------------");
+
+        String xml = configXml(params);
+
+        log.info("签名请求报文：" + xml);
+
+        String result = HttpClientTool.post(url, xml, "utf-8");
+        PayResData payReseData = (PayResData) XmlUtil.getObjectFromXML(result, PayResData.class);
+        Map<String, String> payParam = new HashMap<String, String>();
+        System.out.println(result);
+        payParam.put("trade_state", payReseData.getTrade_state());
+        return payParam;
+    }	
+	public static void main(String[] args) {
+		
+	}
+    
+    public static String configXml(Map<String, String> params) throws IOException {
+        StringBuffer buffer=new StringBuffer();
+        
+        buffer.append("<xml>");
+        for(Entry<String,String> entry:params.entrySet()){
+            buffer.append("<").append(entry.getKey()).append(">");
+            buffer.append(entry.getValue());
+            buffer.append("</").append(entry.getKey()).append(">");
+        }
+        buffer.append("</xml>");
+        
+        return buffer.toString();
+    }	 
+}

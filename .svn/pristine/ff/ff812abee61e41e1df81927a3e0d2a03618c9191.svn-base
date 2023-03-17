@@ -1,0 +1,43 @@
+package com.hd.common.util;
+
+import java.io.IOException;
+
+import com.thoughtworks.xstream.core.util.Base64Encoder;
+
+import sun.misc.BASE64Decoder;
+
+public class Base64UTL {
+	public static String decoderstr(String messages_info){
+		String messages_infostr=null;
+		try {
+			BASE64Decoder baDecoder = new BASE64Decoder();
+			byte[] messages_infobase;
+			messages_infobase = baDecoder.decodeBuffer(messages_info);
+			messages_infostr= new String(messages_infobase,"UTF-8");
+			
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			messages_info="数据错误!";
+		}
+		return messages_infostr;
+		
+		
+	}
+	
+	
+	public static String encoderstr(String messages_info){
+		String messages_infostr=null;
+		
+			Base64Encoder base64Encoder = new Base64Encoder();
+			
+			 messages_infostr = base64Encoder.encode(messages_info.getBytes());
+			
+			
+	
+		return messages_infostr;
+		
+		
+	}
+
+}

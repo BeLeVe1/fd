@@ -1,0 +1,131 @@
+package com.hd.microblog.model;
+
+import java.io.Serializable;
+
+import javax.persistence.Entity;
+import javax.persistence.Id;
+import javax.persistence.Table;
+
+@Entity
+@Table(name="dt_prediction")
+public class dt_prediction implements Serializable{
+
+	private static final long serialVersionUID = 1L;
+	@Id
+	public int prediction_id;
+	public String zbcode;
+	public String qccode;
+	public String qcname;
+	public String ycz1;
+	public String ycz2;
+	public String ycz3;
+	public String bzc1;
+	public String bzc2;
+	public String bzc3;
+	public String ycff1;
+	public String ycff2;
+	public String ycff3;
+	public String zsz1;
+	public String zsz2;
+	public String zsz3;
+	public int getPrediction_id() {
+		return prediction_id;
+	}
+	public void setPrediction_id(int prediction_id) {
+		this.prediction_id = prediction_id;
+	}
+	public String getZbcode() {
+		return zbcode;
+	}
+	public void setZbcode(String zbcode) {
+		this.zbcode = zbcode;
+	}
+	public String getQccode() {
+		return qccode;
+	}
+	public void setQccode(String qccode) {
+		this.qccode = qccode;
+	}
+	public String getQcname() {
+		return qcname;
+	}
+	public void setQcname(String qcname) {
+		this.qcname = qcname;
+	}
+	public String getYcz1() {
+		return ycz1;
+	}
+	public void setYcz1(String ycz1) {
+		this.ycz1 = ycz1;
+	}
+	public String getYcz2() {
+		return ycz2;
+	}
+	public void setYcz2(String ycz2) {
+		this.ycz2 = ycz2;
+	}
+	public String getYcz3() {
+		return ycz3;
+	}
+	public void setYcz3(String ycz3) {
+		this.ycz3 = ycz3;
+	}
+	public String getBzc1() {
+		return bzc1;
+	}
+	public void setBzc1(String bzc1) {
+		this.bzc1 = bzc1;
+	}
+	public String getBzc2() {
+		return bzc2;
+	}
+	public void setBzc2(String bzc2) {
+		this.bzc2 = bzc2;
+	}
+	public String getBzc3() {
+		return bzc3;
+	}
+	public void setBzc3(String bzc3) {
+		this.bzc3 = bzc3;
+	}
+	public String getYcff1() {
+		return ycff1;
+	}
+	public void setYcff1(String ycff1) {
+		this.ycff1 = ycff1;
+	}
+	public String getYcff2() {
+		return ycff2;
+	}
+	public void setYcff2(String ycff2) {
+		this.ycff2 = ycff2;
+	}
+	public String getYcff3() {
+		return ycff3;
+	}
+	public void setYcff3(String ycff3) {
+		this.ycff3 = ycff3;
+	}
+	public String getZsz1() {
+		return zsz1;
+	}
+	public void setZsz1(String zsz1) {
+		this.zsz1 = zsz1;
+	}
+	public String getZsz2() {
+		return zsz2;
+	}
+	public void setZsz2(String zsz2) {
+		this.zsz2 = zsz2;
+	}
+	public String getZsz3() {
+		return zsz3;
+	}
+	public void setZsz3(String zsz3) {
+		this.zsz3 = zsz3;
+	}
+	public static long getSerialversionuid() {
+		return serialVersionUID;
+	}
+	
+}

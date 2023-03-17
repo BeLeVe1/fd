@@ -1,0 +1,19 @@
+package com.hd.microblog.service;
+
+import java.util.List;
+import java.util.Map;
+
+import com.hd.common.service.IBaseService;
+import com.hd.microblog.model.dt_prediction;
+
+
+public interface dt_predictionService  extends IBaseService<dt_prediction, Integer> {
+
+	List adminfindpredictionlist(String zbcode,String qccode,String qcname,String sort,Integer start, int number);
+
+	List adminfindpredictionlistcount(String zbcode,String qccode,String qcname);
+
+	List adminfindpredictionlist();
+	
+}
+

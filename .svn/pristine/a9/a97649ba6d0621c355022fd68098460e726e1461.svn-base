@@ -1,0 +1,31 @@
+package com.hd.common.util;
+
+public class PageIsHaseNexUtil {
+	public static boolean ishasNext(int total,int pagesize,int pn){
+		int pagenum=0;
+		double dobtotal = total;
+		double a =dobtotal/pagesize;
+		
+		int a1 =total/pagesize;
+		System.out.println(a+"=="+a1);
+		if (a>a1) {
+			pagenum = a1+1;
+			if (pagenum>pn) {
+				return true;
+			}else {
+				return false;
+			}
+		
+		}else {
+			pagenum = a1;
+			if (pagenum>pn) {
+				return true;
+			}else{
+				return false;
+			}
+			
+		}
+		
+	}
+
+}

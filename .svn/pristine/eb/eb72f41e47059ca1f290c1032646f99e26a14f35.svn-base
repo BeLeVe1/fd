@@ -1,0 +1,237 @@
+//package com.hd.microblog.web.controller.task;
+//
+//
+//import java.text.DecimalFormat;
+//import java.util.Calendar;
+//import java.util.GregorianCalendar;
+//import java.util.List;
+//import java.util.Map;
+//
+//import org.slf4j.Logger;
+//import org.slf4j.LoggerFactory;
+//import org.springframework.beans.factory.annotation.Autowired;
+//import org.springframework.beans.factory.annotation.Qualifier;
+//import org.springframework.scheduling.annotation.Scheduled;    
+//import org.springframework.stereotype.Component;
+//
+//import com.hd.microblog.model.dt_jxwreturn;
+//import com.hd.microblog.model.dt_order;
+//import com.hd.microblog.model.dt_rank;
+//import com.hd.microblog.model.dt_task;
+//import com.hd.microblog.model.dt_user;
+//import com.hd.microblog.model.dt_usermoney;
+//import com.hd.microblog.service.dt_jxwreturnService;
+//import com.hd.microblog.service.dt_orderService;
+//import com.hd.microblog.service.dt_rankService;
+//import com.hd.microblog.service.dt_referService;
+//import com.hd.microblog.service.dt_taskService;
+//import com.hd.microblog.service.dt_userService;
+//import com.hd.microblog.service.dt_usermoneyService;
+//import com.hd.microblog.web.controller.weixin.WeixinUtil;
+//
+//@Component("TaskJob4")  
+//public class TaskJob4 {  
+//	private static Logger log = LoggerFactory.getLogger(WeixinUtil.class);
+//	
+//	@Autowired
+//	@Qualifier("dt_taskService")
+//	private dt_taskService dt_taskservice;
+//	@Autowired
+//	@Qualifier("dt_rankService")
+//	private dt_rankService dt_rankservice;
+//	@Autowired
+//	@Qualifier("dt_orderService")
+//	private dt_orderService dt_orderservice;
+//	@Autowired
+//	@Qualifier("dt_userService")
+//	private dt_userService dt_userservice;
+//	@Autowired
+//	@Qualifier("dt_usermoneyService")
+//	private dt_usermoneyService dt_usermoneyservice;
+//	@Autowired
+//	@Qualifier("dt_referService")
+//	private dt_referService dt_referservice;
+//	
+//	
+//    @Scheduled(cron = "0 0 5 ? * MON" )  
+//    public void TaskJob() {
+//    	DecimalFormat df = new DecimalFormat("#");
+//    	// 86400一天             604800一周
+//    	//当周周一零点时间戳 
+//		Calendar currentDate = new GregorianCalendar();
+//		currentDate.setFirstDayOfWeek(Calendar.MONDAY);
+//		currentDate.set(Calendar.HOUR_OF_DAY, 0);
+//		currentDate.set(Calendar.MINUTE, 0);
+//		currentDate.set(Calendar.SECOND, 0);
+//		currentDate.set(Calendar.DAY_OF_WEEK, Calendar.MONDAY);
+//		System.out.println("当周周一零点时间戳:"+currentDate.getTime().getTime()/1000);
+//		long time = currentDate.getTime().getTime()/1000;
+//		//上周周一零点时间戳
+//		long pasttime = currentDate.getTime().getTime()/1000-604800;
+//		//下周周一零点时间戳
+//		long futuretime = currentDate.getTime().getTime()/1000+604800;
+//		
+//		//上周时间
+//		long time1 = pasttime;
+//		long time2 = time;
+//		//发布任务排行结算
+//		List list = dt_taskservice.apifindtaskrankfortime(time1,time2);
+//		for(int i=0;i<list.size();i++){
+//			Map map = (Map)list.get(i);
+//			dt_rank rank = new dt_rank();
+//			rank.setU_id(Integer.valueOf(String.valueOf(map.get("u_id"))));
+//			if(i==0) {
+//				rank.setMoney(48.88);
+//			}else if(i==1) {
+//				rank.setMoney(28.88);
+//			}else if(i==2) {
+//				rank.setMoney(18.88);
+//			}else if(i==3) {
+//				rank.setMoney(8.88);
+//			}else if(i==4) {
+//				rank.setMoney(7.88);
+//			}else if(i==5) {
+//				rank.setMoney(6.88);
+//			}else if(i==6) {
+//				rank.setMoney(5.88);
+//			}else if(i==7) {
+//				rank.setMoney(4.88);
+//			}else if(i==8) {
+//				rank.setMoney(3.88);
+//			}else if(i==9) {
+//				rank.setMoney(2.88);
+//			}else if(i>=10&&i<=14) {
+//				rank.setMoney(1.88);
+//			}else if(i>=15&&i<=19) {
+//				rank.setMoney(0.88);
+//			}
+//			rank.setTaskmoney(Double.valueOf(df.format(Double.valueOf(String.valueOf(map.get("summoney")))*100)));
+//			rank.setType(1);
+//			rank.setCreatetime(Integer.valueOf(String.valueOf(pasttime)));
+//			dt_rankservice.saveOrUpdate(rank);
+//		}
+//		//完成任务数量排行结算
+//		List list2 = dt_orderservice.apifindorderrankfortime(time1,time2);
+//		for(int i=0;i<list2.size();i++){
+//			Map map = (Map)list2.get(i);
+//			dt_rank rank = new dt_rank();
+//			rank.setU_id(Integer.valueOf(String.valueOf(map.get("u_id"))));
+//			if(i==0) {
+//				rank.setMoney(48.88);
+//			}else if(i==1) {
+//				rank.setMoney(28.88);
+//			}else if(i==2) {
+//				rank.setMoney(18.88);
+//			}else if(i==3) {
+//				rank.setMoney(8.88);
+//			}else if(i==4) {
+//				rank.setMoney(7.88);
+//			}else if(i==5) {
+//				rank.setMoney(6.88);
+//			}else if(i==6) {
+//				rank.setMoney(5.88);
+//			}else if(i==7) {
+//				rank.setMoney(4.88);
+//			}else if(i==8) {
+//				rank.setMoney(3.88);
+//			}else if(i==9) {
+//				rank.setMoney(2.88);
+//			}else if(i>=10&&i<=14) {
+//				rank.setMoney(1.88);
+//			}else if(i>=15&&i<=19) {
+//				rank.setMoney(0.88);
+//			}
+//			rank.setOrdernumber(Integer.valueOf(String.valueOf(map.get("ordernumber"))));
+//			rank.setType(2);
+//			rank.setCreatetime(Integer.valueOf(String.valueOf(pasttime)));
+//			dt_rankservice.saveOrUpdate(rank);
+//		}
+//		//邀请排行结算
+//		List list3 = dt_referservice.apifindinviterankfortime(time1,time2);
+//		for(int i=0;i<list3.size();i++){
+//			Map map = (Map)list3.get(i);
+//			dt_rank rank = new dt_rank();
+//			rank.setU_id(Integer.valueOf(String.valueOf(map.get("u_id"))));
+//			if(i==0) {
+//				rank.setMoney(48.88);
+//			}else if(i==1) {
+//				rank.setMoney(28.88);
+//			}else if(i==2) {
+//				rank.setMoney(18.88);
+//			}else if(i==3) {
+//				rank.setMoney(8.88);
+//			}else if(i==4) {
+//				rank.setMoney(7.88);
+//			}else if(i==5) {
+//				rank.setMoney(6.88);
+//			}else if(i==6) {
+//				rank.setMoney(5.88);
+//			}else if(i==7) {
+//				rank.setMoney(4.88);
+//			}else if(i==8) {
+//				rank.setMoney(3.88);
+//			}else if(i==9) {
+//				rank.setMoney(2.88);
+//			}else if(i>=10&&i<=14) {
+//				rank.setMoney(1.88);
+//			}else if(i>=15&&i<=19) {
+//				rank.setMoney(0.88);
+//			}
+//			rank.setInvitenumber(Integer.valueOf(String.valueOf(map.get("invitenumber"))));
+//			rank.setType(3);
+//			rank.setCreatetime(Integer.valueOf(String.valueOf(pasttime)));
+//			dt_rankservice.saveOrUpdate(rank);
+//		}
+//		//发放奖励
+//		//超级发布者排行奖励
+//		List ranklist1 = dt_rankservice.apifindranklist1fortime(time1,time2);
+//		for(int i=0;i<ranklist1.size();i++) {
+//			dt_rank rank = (dt_rank)ranklist1.get(i);
+//			dt_user user = dt_userservice.get(rank.getU_id());
+//			user.setMoney(user.getMoney()+rank.getMoney());
+//			user.setMoneycount(user.getMoneycount()+rank.getMoney());
+//			dt_userservice.saveOrUpdate(user);
+//			dt_usermoney usermoney = new dt_usermoney();
+//			usermoney.setU_id(user.getU_id());
+//			usermoney.setMoney(rank.getMoney()*100);
+//			usermoney.setInfo("用户"+user.getU_id()+"在【超级发布者】周排行中获得第"+(i+1)+"名，获得奖励"+df.format(rank.getMoney()*100)+"豆");
+//			usermoney.setType(1);
+//			usermoney.setCreatetime(Integer.valueOf(String.valueOf(System.currentTimeMillis() / 1000)));
+//			dt_usermoneyservice.saveOrUpdate(usermoney);
+//		}
+//		//最佳投手排行奖励
+//		List ranklist2 = dt_rankservice.apifindranklist2fortime(time1,time2);
+//		for(int i=0;i<ranklist2.size();i++) {
+//			dt_rank rank = (dt_rank)ranklist2.get(i);
+//			dt_user user = dt_userservice.get(rank.getU_id());
+//			user.setMoney(user.getMoney()+rank.getMoney());
+//			user.setMoneycount(user.getMoneycount()+rank.getMoney());
+//			dt_userservice.saveOrUpdate(user);
+//			dt_usermoney usermoney = new dt_usermoney();
+//			usermoney.setU_id(user.getU_id());
+//			usermoney.setMoney(rank.getMoney()*100);
+//			usermoney.setInfo("用户"+user.getU_id()+"在【最佳投手】周排行中获得第"+(i+1)+"名，获得奖励"+df.format(rank.getMoney()*100)+"豆");
+//			usermoney.setType(1);
+//			usermoney.setCreatetime(Integer.valueOf(String.valueOf(System.currentTimeMillis() / 1000)));
+//			dt_usermoneyservice.saveOrUpdate(usermoney);
+//		}
+//		//金牌推广排行奖励
+//		List ranklist3 = dt_rankservice.apifindranklist3fortime(time1,time2);
+//		for(int i=0;i<ranklist3.size();i++) {
+//			dt_rank rank = (dt_rank)ranklist3.get(i);
+//			dt_user user = dt_userservice.get(rank.getU_id());
+//			user.setMoney(user.getMoney()+rank.getMoney());
+//			user.setMoneycount(user.getMoneycount()+rank.getMoney());
+//			dt_userservice.saveOrUpdate(user);
+//			dt_usermoney usermoney = new dt_usermoney();
+//			usermoney.setU_id(user.getU_id());
+//			usermoney.setMoney(rank.getMoney()*100);
+//			usermoney.setInfo("用户"+user.getU_id()+"在【金牌推广】周排行中获得第"+(i+1)+"名，获得奖励"+df.format(rank.getMoney()*100)+"豆");
+//			usermoney.setType(1);
+//			usermoney.setCreatetime(Integer.valueOf(String.valueOf(System.currentTimeMillis() / 1000)));
+//			dt_usermoneyservice.saveOrUpdate(usermoney);
+//		}			
+//    	System.out.println("周排行结算中。。。"); 
+//    	log.info("--------------------周排行结算中---------------------------");
+//    } 
+//}

@@ -1,0 +1,98 @@
+//package com.hd.microblog.web.controller.task;
+//
+//
+//import java.text.DecimalFormat;
+//import java.util.List;
+//
+//import org.slf4j.Logger;
+//import org.slf4j.LoggerFactory;
+//import org.springframework.beans.factory.annotation.Autowired;
+//import org.springframework.beans.factory.annotation.Qualifier;
+//import org.springframework.scheduling.annotation.Scheduled;    
+//import org.springframework.stereotype.Component;
+//
+//import com.hd.microblog.model.dt_jxwreturn;
+//import com.hd.microblog.model.dt_order;
+//import com.hd.microblog.model.dt_task;
+//import com.hd.microblog.model.dt_user;
+//import com.hd.microblog.model.dt_usermoney;
+//import com.hd.microblog.service.dt_jxwreturnService;
+//import com.hd.microblog.service.dt_orderService;
+//import com.hd.microblog.service.dt_taskService;
+//import com.hd.microblog.service.dt_userService;
+//import com.hd.microblog.service.dt_usermoneyService;
+//import com.hd.microblog.web.controller.weixin.WeixinUtil;
+//
+//@Component("TaskJob3")  
+//public class TaskJob3 {  
+//	private static Logger log = LoggerFactory.getLogger(WeixinUtil.class);
+//	
+//	@Autowired
+//	@Qualifier("dt_orderService")
+//	private dt_orderService dt_orderservice;
+//	@Autowired
+//	@Qualifier("dt_userService")
+//	private dt_userService dt_userservice;
+//	@Autowired
+//	@Qualifier("dt_usermoneyService")
+//	private dt_usermoneyService dt_usermoneyservice;
+//	@Autowired
+//	@Qualifier("dt_jxwreturnService")
+//	private dt_jxwreturnService dt_jxwreturnservice;
+//	
+//	
+//    @Scheduled(cron = "0 0/15 * * * ?" )  
+//    public void TaskJob() {
+//    	DecimalFormat df = new DecimalFormat("#");
+//    	//当前时间
+//    	//查询所有未处理的返回订单
+//		List jxwreturnlist = dt_jxwreturnservice.apifindjxwreturnlistfor0();
+//		for(int i=0;i<jxwreturnlist.size();i++) {
+//			dt_jxwreturn jxwreturn = (dt_jxwreturn)jxwreturnlist.get(i);
+//			//查询订单表是否存在
+//			List orderlist = dt_orderservice.apifindorderforordernum(jxwreturn.getPrize_id());
+//			System.out.println("3============="+orderlist.size());
+//			if(orderlist.size()==0) {
+//	        	//更新用户金额数据
+//				dt_user user = dt_userservice.get(Integer.valueOf(jxwreturn.getResource_id()));
+//				if(user!=null) {
+//					user.setMoney(user.getMoney()+jxwreturn.getTask_prize());
+//					user.setMoneycount(user.getMoneycount()+jxwreturn.getTask_prize());
+//					user.setNumber(user.getNumber()+1);
+//					dt_userservice.saveOrUpdate(user);
+//					//更新用户金额记录表
+//					dt_usermoney usermoney = new dt_usermoney();
+//					usermoney.setU_id(user.getU_id());
+//					usermoney.setStudent(0);
+//					usermoney.setMoney(jxwreturn.getTask_prize()*100);
+//					usermoney.setInfo("用户"+user.getU_id()+"完成【"+jxwreturn.getName()+"】任务，获得奖励"+df.format(jxwreturn.getTask_prize()*100)+"豆");
+//					usermoney.setType(1);
+//					usermoney.setCreatetime(Integer.valueOf(String.valueOf(System.currentTimeMillis() / 1000)));
+//					dt_usermoneyservice.saveOrUpdate(usermoney);
+//					//更新任务记录表
+//					dt_order order = new dt_order();
+//					order.setU_id(Integer.valueOf(jxwreturn.getResource_id()));
+//					order.setT_id(0);
+//					order.setOrdernum(jxwreturn.getPrize_id());
+//					order.setMoney(jxwreturn.getTask_prize());
+//					order.setStatus(4);
+//					order.setCreatetime(Integer.valueOf(String.valueOf(System.currentTimeMillis() / 1000)));
+//					order.setFinishtime(Integer.valueOf(String.valueOf(System.currentTimeMillis() / 1000)));
+//					order.setInfo(jxwreturn.getName());
+//					order.setType(3);
+//					dt_orderservice.saveOrUpdate(order);
+//				}
+//				//更新聚享玩返回数据使用状态
+//				jxwreturn.setStatus(1);
+//				dt_jxwreturnservice.saveOrUpdate(jxwreturn);
+//	        }else {
+//	        	System.out.println("订单已存在不执行");
+//	        	//更新聚享玩返回数据使用状态
+//				jxwreturn.setStatus(1);
+//				dt_jxwreturnservice.saveOrUpdate(jxwreturn);
+//	        }
+//		}
+//    	System.out.println("聚享玩回调任务进行中。。。"); 
+//    	log.info("--------------------聚享玩回调任务进行中---------------------------");
+//    } 
+//}

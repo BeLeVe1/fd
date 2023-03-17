@@ -1,0 +1,76 @@
+package com.hd.common.util;
+
+import javapns.back.PushNotificationManager;
+import javapns.back.SSLConnectionHelper;
+import javapns.data.Device;
+import javapns.data.PayLoad;
+
+public class IosPush {
+	public static void main(String[] args) throws Exception {
+	
+			
+		
+		try {
+			  //String deviceToken = "189c1558c469d683a516a09be4c7851399f721747b89dc10161b5d9a82d2ee71";
+			String deviceToken = "cf247b62 0099c1a5 092cdceb 5836a69d 97e34c2d cdcc31ca 8c8b374a 46a9ff48";
+			
+			  PayLoad payLoad = new PayLoad();
+			  payLoad.addAlert("公告");
+			  payLoad.addBadge(4);
+			  payLoad.addSound("");
+						
+			  PushNotificationManager pushManager = PushNotificationManager.getInstance();
+			  pushManager.addDevice("iPhone", deviceToken);
+						
+			  //Connect to APNs
+			  String host= "gateway.push.apple.com";
+			  int port = 2195;
+			  String certificatePath= "I:/56465.p12";
+			  String certificatePassword= "123456asd";
+			  pushManager.initializeConnection(host,port, certificatePath,certificatePassword, SSLConnectionHelper.KEYSTORE_TYPE_PKCS12);
+						
+			  //Send Push
+			  Device client = pushManager.getDevice("iPhone");
+			  pushManager.sendNotification(client, payLoad);
+			  pushManager.stopConnection();
+
+			  pushManager.removeDevice("iPhone");
+			 }
+			 catch (Exception e) {
+			  e.printStackTrace();
+		}
+	}
+	
+	
+	public void pushMess(String sound,String alert,int badge,String deviceToken){
+		try {
+			  //String deviceToken = "189c1558c469d683a516a09be4c7851399f721747b89dc10161b5d9a82d2ee71";
+			//String deviceToken = "cf247b62 0099c1a5 092cdceb 5836a69d 97e34c2d cdcc31ca 8c8b374a 46a9ff48";
+			
+			  PayLoad payLoad = new PayLoad();
+			  payLoad.addAlert(alert);
+			  payLoad.addBadge(badge);
+			  payLoad.addSound(sound);
+						
+			  PushNotificationManager pushManager = PushNotificationManager.getInstance();
+			  pushManager.addDevice("iPhone", deviceToken);
+						
+			  //Connect to APNs
+			  String host= "gateway.sandbox.push.apple.com";
+			  int port = 2195;
+			  String certificatePath= "I:/iospush.p12";
+			  String certificatePassword= "bfuture123456";
+			  pushManager.initializeConnection(host,port, certificatePath,certificatePassword, SSLConnectionHelper.KEYSTORE_TYPE_PKCS12);
+						
+			  //Send Push
+			  Device client = pushManager.getDevice("iPhone");
+			  pushManager.sendNotification(client, payLoad);
+			  pushManager.stopConnection();
+
+			  pushManager.removeDevice("iPhone");
+			 }
+			 catch (Exception e) {
+			  e.printStackTrace();
+		}
+	}
+}

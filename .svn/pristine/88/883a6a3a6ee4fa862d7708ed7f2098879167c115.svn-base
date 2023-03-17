@@ -1,0 +1,39 @@
+package com.hd.microblog.util;
+
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import cn.jpush.api.JPushClient;
+import cn.jpush.api.push.PushResult;
+import cn.jpush.api.push.model.PushPayload;
+
+public class jiguang {
+	private static Logger LOG = LoggerFactory.getLogger(jiguang.class);
+	static String APP_KEY = "27924b2f4b8250faeef8067f";
+	static String MASTER_SECRET = "1065523a1095405b3a593000";
+	
+	public static void message(String ALERT){
+		JPushClient jpushClient = new JPushClient(MASTER_SECRET, APP_KEY);
+
+	    // For push, all you need do is to build PushPayload object.
+	    PushPayload payload = buildPushObject_all_all_alert(ALERT);
+
+	    PushResult result = null;
+		try {
+			result = jpushClient.sendPush(payload);
+		} catch (cn.jpush.api.common.APIConnectionException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (cn.jpush.api.common.APIRequestException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		LOG.info("Got result - " + result);
+    }
+	
+	public static PushPayload buildPushObject_all_all_alert(String ALERT) {
+        return PushPayload.alertAll(ALERT);
+    }
+	
+}

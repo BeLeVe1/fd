@@ -1,0 +1,574 @@
+package com.hd.microblog.web.controller.admin;
+
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
+
+import net.sf.json.JSONObject;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.ResponseBody;
+
+import com.hd.microblog.model.dt_admin;
+import com.hd.microblog.model.dt_dataprocess;
+import com.hd.microblog.model.dt_datarecord;
+import com.hd.microblog.model.dt_plan;
+import com.hd.microblog.service.dt_adminService;
+import com.hd.microblog.service.dt_dataprocessService;
+import com.hd.microblog.service.dt_datarecordService;
+import com.hd.microblog.service.dt_planService;
+import com.hd.microblog.service.dt_sharedpartService;
+import com.hd.microblog.util.createxls;
+
+
+
+
+@Controller
+public class AdminplanController {
+	 
+	@Autowired
+	@Qualifier("dt_adminService")
+	private dt_adminService dt_adminservice;
+	@Autowired
+	@Qualifier("dt_planService")
+	private dt_planService dt_planservice;
+	@Autowired
+	@Qualifier("dt_datarecordService")
+	private dt_datarecordService dt_datarecordservice;
+	@Autowired
+	@Qualifier("dt_sharedpartService")
+	private dt_sharedpartService dt_sharedpartservice;
+	@Autowired
+	@Qualifier("dt_dataprocessService")
+	private dt_dataprocessService dt_dataprocessservice;
+	
+	//制定计划表--军区
+	@RequestMapping("/adminplanjqlist")
+	public String adminplanjqlist(HttpServletRequest request, HttpServletResponse resp) 
+			throws IOException {
+		return "admin/planjqlist";
+	}
+	//制定计划表--部队
+	@RequestMapping("/adminplanbdlist")
+	public String adminplanbdlist(HttpServletRequest request, HttpServletResponse resp) 
+			throws IOException {
+		return "admin/planbdlist";
+	}
+	//制定计划表--总部
+	@RequestMapping("/adminplanzblist")
+	public String adminplanzblist(HttpServletRequest request, HttpServletResponse resp) 
+			throws IOException {
+		return "admin/planzblist";
+	}
+	//制定计划表
+	@RequestMapping(value = "/adminplanlistajax", method = { RequestMethod.POST }, produces = "application/json; charset=utf-8")
+	@ResponseBody
+	private String adminplanlistajax(HttpServletRequest request, Model model, String page, String rows ,Integer draw, 
+			String jqcode,String bdcode,String zbcode,String qccode,String qcname,String fg,String sort) throws IOException {
+		
+		Integer start = Integer.valueOf(request.getParameter("start"));  
+	    String length = request.getParameter("length");  
+		int number = Integer.valueOf(length);
+		List items = dt_planservice.adminfindplanlist(jqcode,bdcode,zbcode,qccode,qcname,fg,sort,start,number);
+		List count = dt_planservice.adminfindplanlistcount(jqcode,bdcode,zbcode,qccode,qcname,fg);
+		int countnumber = 0;
+		if (count != null && count.size() != 0) {
+			Map map = (Map) count.get(0);
+			countnumber = Integer.valueOf(String.valueOf(map.get("count")));
+		}
+		String jqcode2="";
+		String qccode2="";
+		List returnlist  = new ArrayList();
+		for(int i=0;i<items.size();i++){
+			Map map = (Map)items.get(i);
+			if(fg.equals("总部")){
+				List list = dt_sharedpartservice.adminfindsharedpartlistsum2(Integer.valueOf(String.valueOf(map.get("qccode"))));
+				Map map2 = (Map)list.get(0);
+				map.put("plannumber", map2.get("plannumber"));
+				map.put("number", map2.get("number"));
+				map.put("makingplansnumber", map2.get("makingplansnumber"));
+				map.put("thistimeplansnumber", map2.get("thistimeplansnumber"));
+				map.put("lastnumber", map2.get("lastnumber"));
+				
+				if(String.valueOf(map.get("qccode")).equals(qccode2)) {
+					
+					map.put("number", "——");
+					map.put("makingplansnumber", "——");
+					map.put("thistimeplansnumber", "——");
+					map.put("lastnumber", "——");
+					
+					map.put("plannumber", "——");
+					map.put("kyd", "——");
+					map.put("czflag", 0);
+					qccode2=String.valueOf(map.get("qccode"));
+				}else {
+					map.put("czflag", 1);
+					qccode2=String.valueOf(map.get("qccode"));
+				}
+				returnlist.add(map);
+			}else {
+				List list = dt_sharedpartservice.adminfindsharedpartlistsum2(Integer.valueOf(String.valueOf(map.get("jqcode"))),Integer.valueOf(String.valueOf(map.get("qccode"))));
+				Map map2 = (Map)list.get(0);
+				map.put("plannumber", map2.get("plannumber"));
+				map.put("number", map2.get("number"));
+				map.put("makingplansnumber", map2.get("makingplansnumber"));
+				map.put("thistimeplansnumber", map2.get("thistimeplansnumber"));
+				map.put("lastnumber", map2.get("lastnumber"));
+				
+				if(String.valueOf(map.get("jqcode")).equals(jqcode2)&&String.valueOf(map.get("qccode")).equals(qccode2)) {
+					
+					map.put("number", "——");
+					map.put("makingplansnumber", "——");
+					map.put("thistimeplansnumber", "——");
+					map.put("lastnumber", "——");
+					
+					map.put("plannumber", "——");
+					map.put("kyd", "——");
+					map.put("czflag", 0);
+					jqcode2=String.valueOf(map.get("jqcode"));
+					qccode2=String.valueOf(map.get("qccode"));
+				}else {
+					map.put("czflag", 1);
+					jqcode2=String.valueOf(map.get("jqcode"));
+					qccode2=String.valueOf(map.get("qccode"));
+				}
+				returnlist.add(map);
+			}
+		}
+		
+		JSONObject jobj = new JSONObject();
+		
+		jobj.accumulate("draw", draw);
+		jobj.accumulate("recordsFiltered", countnumber);
+		jobj.accumulate("recordsTotal", countnumber);
+		jobj.accumulate("data", returnlist);
+		return jobj.toString();
+	}
+	//Excel生成--军区
+	@RequestMapping(value = "/adminplanjqExcel",produces = "application/json; charset=utf-8")
+	@ResponseBody
+	private String adminplanjqExcel(HttpServletRequest request,HttpServletResponse resp) throws IOException {
+		HttpSession session = request.getSession();
+		resp.setHeader("Access-Control-Allow-Origin", "*");
+		resp.setHeader("Access-Control-Allow-Methods", "GET,POST");
+		JSONObject json = new JSONObject();
+		try{
+			String fg="军区";
+			//生成xls表头
+			List<String> header = new ArrayList<String>(); // 第一行数据
+			List<List<String>> body = new ArrayList<List<String>>();
+			header.add("军区编号");
+			header.add("部队编号");
+			header.add("装备代码");
+			header.add("器材代码");
+		    header.add("器材名称");
+		    header.add("单位");
+		    header.add("单价");
+		    header.add("单装用数");
+		    header.add("分工");
+		    header.add("预测所需数");
+		    header.add("最大消耗数");
+		    header.add("满足率");
+		    header.add("计划优化数");
+		    header.add("在库数");
+		    header.add("已制定计划数");
+		    header.add("本次制定数");
+		    header.add("剩余计划数");
+		    String jqcode2="";
+			String qccode2="";
+		    List items = dt_planservice.adminfindplanlist(fg);
+			for(int i=0;i<items.size();i++){
+				Map map = (Map)items.get(i);
+				
+				List list = dt_sharedpartservice.adminfindsharedpartlistsum2(Integer.valueOf(String.valueOf(map.get("qccode"))));
+				Map map2 = (Map)list.get(0);
+				map.put("plannumber", map2.get("plannumber"));
+				map.put("number", map2.get("number"));
+				map.put("makingplansnumber", map2.get("makingplansnumber"));
+				map.put("thistimeplansnumber", map2.get("thistimeplansnumber"));
+				map.put("lastnumber", map2.get("lastnumber"));
+				
+				if(String.valueOf(map.get("qccode")).equals(qccode2)) {
+					
+					map.put("number", "——");
+					map.put("makingplansnumber", "——");
+					map.put("thistimeplansnumber", "——");
+					map.put("lastnumber", "——");
+					
+					map.put("plannumber", "——");
+					map.put("kyd", "——");
+					qccode2=String.valueOf(map.get("qccode"));
+				}else {
+					qccode2=String.valueOf(map.get("qccode"));
+				}
+				
+				//添加xls信息
+				List<String> data = new ArrayList<String>();
+				data.add(String.valueOf(map.get("jqcode")));
+				data.add(String.valueOf(map.get("bdcode")));
+				data.add(String.valueOf(map.get("zbcode")));
+				data.add(String.valueOf(map.get("qccode")));
+				data.add(String.valueOf(map.get("qcname")));
+				data.add(String.valueOf(map.get("unit")));
+				data.add(String.valueOf(map.get("unitprice")));
+				data.add(String.valueOf(map.get("dzys")));
+				data.add(String.valueOf(map.get("fg")));
+				data.add(String.valueOf(map.get("predictionnumber")));
+				data.add(String.valueOf(map.get("maxnumber")));
+				data.add(String.valueOf(map.get("kyd")));
+				data.add(String.valueOf(map.get("plannumber")));
+				data.add(String.valueOf(map.get("number")));
+				data.add(String.valueOf(map.get("makingplansnumber")));
+				data.add(String.valueOf(map.get("thistimeplansnumber")));
+				data.add(String.valueOf(map.get("lastnumber")));
+				
+		    	body.add(data);
+			}
+			//xls输出
+			String loadpath = request.getSession().getServletContext().getRealPath("/") + "..//upload" + File.separator;
+		    //新建文件路径
+		    File file2 = new File(loadpath);
+			if (!file2.exists()) {
+				file2.mkdir();
+			}
+			try(OutputStream out = new FileOutputStream(loadpath+"/"+"制定计划-军区.xls")){
+				createxls.generateExcel("Sheet1", header, body, out);
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+			json.put("code", "100");
+			json.put("info", "生成成功");
+		}catch(Exception e){
+			e.printStackTrace();
+			json.put("code", "400");
+			json.put("info", "系统错误");
+		}
+		return json.toString();
+	}
+	//Excel生成--部队
+	@RequestMapping(value = "/adminplanbdExcel",produces = "application/json; charset=utf-8")
+	@ResponseBody
+	private String adminplanbdExcel(HttpServletRequest request,HttpServletResponse resp) throws IOException {
+		HttpSession session = request.getSession();
+		resp.setHeader("Access-Control-Allow-Origin", "*");
+		resp.setHeader("Access-Control-Allow-Methods", "GET,POST");
+		JSONObject json = new JSONObject();
+		try{
+			String fg="部队";
+			//生成xls表头
+			List<String> header = new ArrayList<String>(); // 第一行数据
+			List<List<String>> body = new ArrayList<List<String>>();
+			header.add("军区编号");
+			header.add("部队编号");
+			header.add("装备代码");
+			header.add("器材代码");
+		    header.add("器材名称");
+		    header.add("单位");
+		    header.add("单价");
+		    header.add("单装用数");
+		    header.add("分工");
+		    header.add("预测所需数");
+		    header.add("最大消耗数");
+		    header.add("满足率");
+		    header.add("计划优化数");
+		    header.add("在库数");
+		    header.add("已制定计划数");
+		    header.add("本次制定数");
+		    header.add("剩余计划数");
+		    String jqcode2="";
+			String qccode2="";
+		    List items = dt_planservice.adminfindplanlist(fg);
+			for(int i=0;i<items.size();i++){
+				Map map = (Map)items.get(i);
+				
+				List list = dt_sharedpartservice.adminfindsharedpartlistsum2(Integer.valueOf(String.valueOf(map.get("qccode"))));
+				Map map2 = (Map)list.get(0);
+				map.put("plannumber", map2.get("plannumber"));
+				map.put("number", map2.get("number"));
+				map.put("makingplansnumber", map2.get("makingplansnumber"));
+				map.put("thistimeplansnumber", map2.get("thistimeplansnumber"));
+				map.put("lastnumber", map2.get("lastnumber"));
+				
+				if(String.valueOf(map.get("qccode")).equals(qccode2)) {
+					
+					map.put("number", "——");
+					map.put("makingplansnumber", "——");
+					map.put("thistimeplansnumber", "——");
+					map.put("lastnumber", "——");
+					
+					map.put("plannumber", "——");
+					map.put("kyd", "——");
+					qccode2=String.valueOf(map.get("qccode"));
+				}else {
+					qccode2=String.valueOf(map.get("qccode"));
+				}
+				
+				//添加xls信息
+				List<String> data = new ArrayList<String>();
+				data.add(String.valueOf(map.get("jqcode")));
+				data.add(String.valueOf(map.get("bdcode")));
+				data.add(String.valueOf(map.get("zbcode")));
+				data.add(String.valueOf(map.get("qccode")));
+				data.add(String.valueOf(map.get("qcname")));
+				data.add(String.valueOf(map.get("unit")));
+				data.add(String.valueOf(map.get("unitprice")));
+				data.add(String.valueOf(map.get("dzys")));
+				data.add(String.valueOf(map.get("fg")));
+				data.add(String.valueOf(map.get("predictionnumber")));
+				data.add(String.valueOf(map.get("maxnumber")));
+				data.add(String.valueOf(map.get("kyd")));
+				data.add(String.valueOf(map.get("plannumber")));
+				data.add(String.valueOf(map.get("number")));
+				data.add(String.valueOf(map.get("makingplansnumber")));
+				data.add(String.valueOf(map.get("thistimeplansnumber")));
+				data.add(String.valueOf(map.get("lastnumber")));
+				
+		    	body.add(data);
+			}
+			//xls输出
+			String loadpath = request.getSession().getServletContext().getRealPath("/") + "..//upload" + File.separator;
+		    //新建文件路径
+		    File file2 = new File(loadpath);
+			if (!file2.exists()) {
+				file2.mkdir();
+			}
+			try(OutputStream out = new FileOutputStream(loadpath+"/"+"制定计划-部队.xls")){
+				createxls.generateExcel("Sheet1", header, body, out);
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+			json.put("code", "100");
+			json.put("info", "生成成功");
+		}catch(Exception e){
+			e.printStackTrace();
+			json.put("code", "400");
+			json.put("info", "系统错误");
+		}
+		return json.toString();
+	}	
+	//Excel生成--总部
+	@RequestMapping(value = "/adminplanzbExcel",produces = "application/json; charset=utf-8")
+	@ResponseBody
+	private String adminplanzbExcel(HttpServletRequest request,HttpServletResponse resp) throws IOException {
+		HttpSession session = request.getSession();
+		resp.setHeader("Access-Control-Allow-Origin", "*");
+		resp.setHeader("Access-Control-Allow-Methods", "GET,POST");
+		JSONObject json = new JSONObject();
+		try{
+			String fg="总部";
+			//生成xls表头
+			List<String> header = new ArrayList<String>(); // 第一行数据
+			List<List<String>> body = new ArrayList<List<String>>();
+			header.add("军区编号");
+			header.add("部队编号");
+			header.add("装备代码");
+			header.add("器材代码");
+		    header.add("器材名称");
+		    header.add("单位");
+		    header.add("单价");
+		    header.add("单装用数");
+		    header.add("分工");
+		    header.add("预测所需数");
+		    header.add("最大消耗数");
+		    header.add("满足率");
+		    header.add("计划优化数");
+		    header.add("在库数");
+		    header.add("已制定计划数");
+		    header.add("本次制定数");
+		    header.add("剩余计划数");
+			String qccode2="";
+		    List items = dt_planservice.adminfindplanlist(fg);
+			for(int i=0;i<items.size();i++){
+				Map map = (Map)items.get(i);
+				
+				List list = dt_sharedpartservice.adminfindsharedpartlistsum2(Integer.valueOf(String.valueOf(map.get("qccode"))));
+				Map map2 = (Map)list.get(0);
+				map.put("plannumber", map2.get("plannumber"));
+				map.put("number", map2.get("number"));
+				map.put("makingplansnumber", map2.get("makingplansnumber"));
+				map.put("thistimeplansnumber", map2.get("thistimeplansnumber"));
+				map.put("lastnumber", map2.get("lastnumber"));
+				
+				if(String.valueOf(map.get("qccode")).equals(qccode2)) {
+					
+					map.put("number", "——");
+					map.put("makingplansnumber", "——");
+					map.put("thistimeplansnumber", "——");
+					map.put("lastnumber", "——");
+					
+					map.put("plannumber", "——");
+					map.put("kyd", "——");
+					qccode2=String.valueOf(map.get("qccode"));
+				}else {
+					qccode2=String.valueOf(map.get("qccode"));
+				}
+				
+				//添加xls信息
+				List<String> data = new ArrayList<String>();
+				data.add(String.valueOf(map.get("jqcode")));
+				data.add(String.valueOf(map.get("bdcode")));
+				data.add(String.valueOf(map.get("zbcode")));
+				data.add(String.valueOf(map.get("qccode")));
+				data.add(String.valueOf(map.get("qcname")));
+				data.add(String.valueOf(map.get("unit")));
+				data.add(String.valueOf(map.get("unitprice")));
+				data.add(String.valueOf(map.get("dzys")));
+				data.add(String.valueOf(map.get("fg")));
+				data.add(String.valueOf(map.get("predictionnumber")));
+				data.add(String.valueOf(map.get("maxnumber")));
+				data.add(String.valueOf(map.get("kyd")));
+				data.add(String.valueOf(map.get("plannumber")));
+				data.add(String.valueOf(map.get("number")));
+				data.add(String.valueOf(map.get("makingplansnumber")));
+				data.add(String.valueOf(map.get("thistimeplansnumber")));
+				data.add(String.valueOf(map.get("lastnumber")));
+				
+		    	body.add(data);
+			}
+			//xls输出
+			String loadpath = request.getSession().getServletContext().getRealPath("/") + "..//upload" + File.separator;
+		    //新建文件路径
+		    File file2 = new File(loadpath);
+			if (!file2.exists()) {
+				file2.mkdir();
+			}
+			try(OutputStream out = new FileOutputStream(loadpath+"/"+"制定计划-总部.xls")){
+				createxls.generateExcel("Sheet1", header, body, out);
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+			json.put("code", "100");
+			json.put("info", "生成成功");
+		}catch(Exception e){
+			e.printStackTrace();
+			json.put("code", "400");
+			json.put("info", "系统错误");
+		}
+		return json.toString();
+	}	
+	//制定计划记录添加
+	@RequestMapping("/adminplanadd")
+	public String admindatarecordadd(HttpServletRequest request, HttpServletResponse resp,
+			Integer plan_id,Integer flag) 
+			throws IOException {//flag 1总部  2军区  3部队
+		dt_plan plan = dt_planservice.get(plan_id);
+		dt_dataprocess dataprocess = dt_dataprocessservice.get(plan.getDataprocess_id());
+		request.setAttribute("plan", plan);
+		request.setAttribute("dataprocess", dataprocess);
+		request.setAttribute("flag", flag);
+		return "admin/planadd";
+	}
+	@RequestMapping(value = "/adminplanaddajax", method = { RequestMethod.POST }, produces = "application/json; charset=utf-8")
+	@ResponseBody
+	private Map adminplanaddajax(HttpServletRequest request,Integer plan_id,Integer number,String planpeople,
+			String people,String text,Integer flag) throws IOException {
+		HttpSession session = request.getSession();
+		Map map = new HashMap<String, String>();
+		try{
+			//获取登录用户信息
+//			dt_admin admin = (dt_admin) session.getAttribute("admin");
+			//计划叠加
+			dt_plan plan = dt_planservice.get(plan_id);
+			plan.setMakingplansnumber(plan.getMakingplansnumber()+number);
+			plan.setThistimeplansnumber(number);
+			dt_planservice.saveOrUpdate(plan);
+			//查询数据处理表
+			dt_dataprocess dataprocess = dt_dataprocessservice.get(plan.getDataprocess_id());
+			//保存记录
+			dt_datarecord datarecord = new dt_datarecord();
+			datarecord.setDataprocess_id(plan_id);
+			datarecord.setAdmin_id(1);
+			datarecord.setFlag(flag);
+			//flag 1总部  2军区  3部队
+			if(flag==1) {
+				datarecord.setJhcode(dataprocess.getQccode()+String.valueOf(Integer.valueOf(String.valueOf(System.currentTimeMillis() / 1000))));
+			}else if(flag==2) {
+				datarecord.setJhcode(dataprocess.getJqcode()+dataprocess.getQccode()+String.valueOf(Integer.valueOf(String.valueOf(System.currentTimeMillis() / 1000))));
+			}else if(flag==3) {
+				datarecord.setJhcode(dataprocess.getBdcode()+dataprocess.getQccode()+String.valueOf(Integer.valueOf(String.valueOf(System.currentTimeMillis() / 1000))));
+			}
+			datarecord.setAge("年份10");
+			datarecord.setNumber(number);
+			datarecord.setPlanpeople(planpeople);
+			datarecord.setPeople(people);
+			datarecord.setText(text);
+			datarecord.setCreatetime(Integer.valueOf(String.valueOf(System.currentTimeMillis() / 1000)));
+			dt_datarecordservice.saveOrUpdate(datarecord);
+			map.put("code", "100");
+			map.put("info", "添加成功");
+		}catch(Exception e){
+			e.printStackTrace();
+			map.put("code", "400");
+			map.put("info", "添加失败");
+		}
+		return map;
+	}
+	//数据添加记录
+	@RequestMapping("/admindatarecordlist")
+	public String admindatarecordlist(HttpServletRequest request, HttpServletResponse resp,
+			Integer plan_id,Integer flag) 
+			throws IOException {
+		request.setAttribute("flag", flag);
+		request.setAttribute("plan_id", plan_id);
+		return "admin/datarecordlist";
+	}
+	@RequestMapping(value = "/admindatarecordlistajax", method = { RequestMethod.POST }, produces = "application/json; charset=utf-8")
+	@ResponseBody
+	private String admindatarecordlistajax(HttpServletRequest request, Model model, String page, String rows ,Integer draw,
+			Integer plan_id,Integer flag) throws IOException {
+		
+		dt_plan plan = dt_planservice.get(plan_id);
+		
+		Integer start = Integer.valueOf(request.getParameter("start"));  
+	    String length = request.getParameter("length");  
+		int number = Integer.valueOf(length);
+		List items = dt_datarecordservice.adminfinddatarecordlist(start,number,plan.getDataprocess_id(),flag);
+		List count = dt_datarecordservice.adminfinddatarecordlistcount(plan.getDataprocess_id(),flag);
+		int countnumber = 0;
+		if (count != null && count.size() != 0) {
+			Map map = (Map) count.get(0);
+			countnumber = Integer.valueOf(String.valueOf(map.get("count")));
+		}
+		List returnlist  = new ArrayList();
+		for(int i=0;i<items.size();i++){
+			Map map = (Map)items.get(i);
+			//时间转换
+			SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+			Long time = Long.valueOf(String.valueOf(map.get("createtime")))*1000;
+			Date date = new Date(time);
+			map.put("createtime",sdf.format(date));
+			returnlist.add(map);
+		}
+		
+		JSONObject jobj = new JSONObject();
+		
+		jobj.accumulate("draw", draw);
+		jobj.accumulate("recordsFiltered", countnumber);
+		jobj.accumulate("recordsTotal", countnumber);
+		jobj.accumulate("data", returnlist);
+		return jobj.toString();
+	}	
+}
+
+
+
+
+
+

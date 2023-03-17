@@ -1,0 +1,50 @@
+package com.hd.microblog.web.controller.weixin;
+
+import java.io.Serializable;
+
+
+public class ServerConfig implements Serializable {
+	
+	private static final long serialVersionUID = 1L;
+	
+	private static String baseUrl ="xiaobai.jikewangluo.cn";
+	private static String context ="/renwu/";
+	private static String urlip ="101.37.77.127";
+	private static String APP_ID ="wxeacd5c31a7cfcb2c";
+	private static String APP_SECRET ="8c208edc16c5f19b0f7197c7aba5321d";
+	private static String partnerId ="1528319871";
+	private static String partnerSecert ="h21n1b4v2n1m4e1nD12S7766dhah1x2a";
+	private static String paynotify ="xiaobai.jikewangluo.cn/renwu/";
+	private static String paycertfilepath ="/software/cert/apiclient_cert.p12";
+	public static long getSerialversionuid() {
+		return serialVersionUID;
+	}
+	public static String getBaseUrl() {
+		return baseUrl;
+	}
+	public static String getContext() {
+		return context;
+	}
+	public static String getUrlip() {
+		return urlip;
+	}
+	public static String getAPP_ID() {
+		return APP_ID;
+	}
+	public static String getAPP_SECRET() {
+		return APP_SECRET;
+	}
+	public static String getPartnerId() {
+		return partnerId;
+	}
+	public static String getPartnerSecert() {
+		return partnerSecert;
+	}
+	public static String getPaynotify() {
+		return paynotify;
+	}
+	public static String getPaycertfilepath() {
+		return paycertfilepath;
+	}
+	
+}

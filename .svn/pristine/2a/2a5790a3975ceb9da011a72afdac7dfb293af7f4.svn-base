@@ -1,0 +1,129 @@
+package com.hd.microblog.util;
+
+public class jspnamechange {
+	
+	public String namechange(String name) {
+		
+		if(name.equals("error.jsp")){
+			name=name+"（错误提示页）";
+		}
+		if(name.equals("head.jsp")){
+			name=name+"（网站头文件）";
+		}
+		if(name.equals("index.jsp")){
+			name=name+"（网站首页）";
+		}
+		if(name.equals("jigou.jsp")){
+			name=name+"（机构页）";
+		}
+		if(name.equals("listdetail.jsp")){
+			name=name+"（详情页）";
+		}
+		if(name.equals("listone.jsp")){
+			name=name+"（列表样式一）";
+		}
+		if(name.equals("listtow.jsp")){
+			name=name+"（列表样式二）";
+		}
+		if(name.equals("mesdetail.jsp")){
+			name=name+"（新闻详细页）";
+		}
+		if(name.equals("receiveForm.jsp")){
+			name=name+"（签收提示）";
+		}
+		if(name.equals("receiveRecordLit.jsp")){
+			name=name+"（签收列表）";
+		}
+		if(name.equals("tablecss.jsp")){
+			name=name+"（签收table样式）";
+		}
+		if(name.equals("taglibs.jsp")){
+			name=name+"（页面引用lib列表）";
+		}
+		if(name.equals("addmodule.jsp")){
+			name=name+"（添加模块）";
+		}
+		
+		if(name.equals("checkmodulelist.jsp")){
+			name=name+"（审核模块列表）";
+		}
+		if(name.equals("codecontent.jsp")){
+			name=name+"（源码编辑器）";
+		}
+		if(name.equals("fdguanggao.jsp")){
+			name=name+"（首页浮动广告控制）";
+		}
+		
+		if(name.equals("jigoumodule.jsp")){
+			name=name+"（机构模块控制）";
+		}
+		if(name.equals("login.jsp")){
+			name=name+"（后台登录页）";
+		}
+		if(name.equals("messagechecklist.jsp")){
+			name=name+"（新闻审核列表）";
+		}
+		if(name.equals("messagelist.jsp")){
+			name=name+"（新闻列表）";
+		}
+		if(name.equals("messagepub.jsp")){
+			name=name+"（新闻发布）";
+		}
+		
+		if(name.equals("messageupdate.jsp")){
+			name=name+"（新闻修改）";
+		}
+		if(name.equals("moban.jsp")){
+			name=name+"（源码结构树）";
+		}
+		if(name.equals("module.jsp")){
+			name=name+"（模块配置）";
+		}
+		if(name.equals("modulelist.jsp")){
+			name=name+"（模块列表）";
+		}
+		if(name.equals("secendpage.jsp")){
+			name=name+"（二级页面配置）";
+		}
+		if(name.equals("updatepersonpw.jsp")){
+			name=name+"（个人密码修改）";
+		}
+		if(name.equals("userGrouprule.jsp")){
+			name=name+"（用户组设置一）";
+		}
+		if(name.equals("usergroupruleadd.jsp")){
+			name=name+"（用户组设置2）";
+		}
+		if(name.equals("userlist.jsp")){
+			name=name+"（用户列表）";
+		}
+		if(name.equals("userrule.jsp")){
+			name=name+"（用户权限）";
+		}
+		if(name.equals("userruleadd.jsp")){
+			name=name+"（用户权限设置一）";
+		}
+		if(name.equals("wllist.jsp")){
+			name=name+"（外部链接设置一）";
+		}
+		if(name.equals("wllistadd.jsp")){
+			name=name+"（外部链接设置二）";
+		}
+		if(name.equals("welcome.jsp")){
+			name=name+"（后台首页）";
+		}
+		if(name.equals("menu.jsp")){
+			name=name+"（未使用）";
+		}
+		if(name.equals("duilian.jsp")){
+			name=name+"（首页对联控制）";
+		}
+		if(name.equals("indexmodule.jsp")){
+			name=name+"（首页模块控制）";
+		}
+		
+		return name;
+		
+	}
+
+}

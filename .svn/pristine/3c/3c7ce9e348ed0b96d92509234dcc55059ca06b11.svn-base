@@ -1,0 +1,42 @@
+package com.hd.microblog.service.impl;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.stereotype.Service;
+
+import com.hd.common.dao.IBaseDao;
+import com.hd.common.service.impl.BaseService;
+import com.hd.microblog.dao.dt_planDao;
+import com.hd.microblog.model.dt_plan;
+import com.hd.microblog.service.dt_planService;
+@Service("dt_planService")
+public class dt_planServiceImpl extends BaseService<dt_plan, Integer> implements dt_planService{
+	private dt_planDao dt_plandao;
+	@Autowired
+	@Qualifier("dt_planDao")
+	@Override
+	public void setBaseDao(IBaseDao<dt_plan, Integer> dt_plandao) {
+		this.baseDao = dt_plandao;
+		this.dt_plandao = (dt_planDao) dt_plandao;
+	}
+	@Override
+	public List adminfindplanlist(Integer start, int number) {
+		// TODO Auto-generated method stub
+		String sql = "select d.*,p.plan_id,p.predictionnumber,p.plannumber,p.number,p.makingplansnumber,p.thistimeplansnumber,p.lastnumber from dt_dataprocess d left join dt_plan p on d.dataprocess_id=p.dataprocess_id where 1=1 ";
+		sql += " limit ?, ? ";
+		List<Object> paramlist = new ArrayList();
+		paramlist.add(start);
+		paramlist.add(number);
+		return dt_plandao.exesqlrelist(sql, paramlist);
+	}
+	@Override
+	public List adminfindplanlistcount() {
+		// TODO Auto-generated method stub
+		String sql = "select count(*) count from dt_dataprocess where 1=1 ";
+		return dt_plandao.exesqlrelist(sql, null);
+	}
+}

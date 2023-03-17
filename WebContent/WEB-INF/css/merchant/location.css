@@ -1,0 +1,111 @@
+@CHARSET "UTF-8";
+#merchant-location-header{
+	height: 32px;
+	width:100%;
+	margin: 5px 0;
+}
+#merchant-location-header label{
+	float:left;
+}
+
+#merchant-location-header img{
+	max-width: 20%;
+}
+
+#merchant-location-header input{
+	width: 60%;
+	float:right;
+	line-height:34px;
+	border:0px; 
+    outline:none;
+    font-family:"微软雅黑";
+	font-size:15px;
+	appearance:none;
+	-moz-appearance:none; 
+	-webkit-appearance:none; 
+	background:#F3F3F3;
+	text-indent:2em;
+	border-radius: 2px 0px 0px 2px;
+	margin:0px;
+	padding:0px;
+    box-shadow: 1px 2px 1px rgba(0,0,0,.15);
+}
+
+#merchant-location-content{
+	position:absolute;
+	top:50px;
+	bottom:215px;
+	left:0;
+	right:0;
+}
+
+#merchant-location-footer{
+	position:absolute;
+	bottom:62px;
+	height:150px;
+	left:0;
+	right:0;
+	overflow-y:auto;
+}
+
+#merchant-location-submit{
+	position:absolute;
+	bottom:0px;
+	height:50px;
+	left:0;
+	right:0;
+	overflow-y:auto;
+}
+
+#merchant-location-submit> button{
+	width:100%;
+	height:48px;
+	background:#5a98de;
+	border: none;
+    border-radius: 5px;
+    font-family:"微软雅黑";
+	font-size:25px;
+	color:#fff;
+}
+
+.rec-location{
+	border-bottom: 1px solid #E3E3E3;
+    padding: 5px 0;
+}
+.rec-location-title{
+	font-size: 20px;
+    text-indent: 20px;
+    color:#515054;
+}
+.rec-location-address{
+	font-size: 15px;
+    color: #AAABAE;
+    text-indent: 20px;
+}
+.rec-location-first > .rec-location-title {
+	color:#5a98de;
+}
+.rec-location-first > .rec-location-address {
+	color:#515054;
+}
+
+.btn{
+	cursor:pointer;
+}
+
+#map-pin{
+	position:absolute;
+	top:50px;
+	left:50%;
+	z-index:10;
+}
+
+#search-button{
+	float: right;
+    height: 34px;
+    width: 40px;
+    border: 0px;
+    box-shadow: 1px 2px 1px rgba(0,0,0,.15);
+    border-radius: 0 2px 2px 0;
+    margin-right: 10px; 
+}

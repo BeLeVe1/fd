@@ -1,0 +1,401 @@
+//package com.hd.microblog.web.controller.api;
+//
+//import java.io.IOException;
+//import java.io.UnsupportedEncodingException;
+//import java.math.BigInteger;
+//import java.sql.SQLException;
+//import java.text.DecimalFormat;
+//import java.text.SimpleDateFormat;
+//import java.util.ArrayList;
+//import java.util.Calendar;
+//import java.util.Date;
+//import java.util.HashMap;
+//import java.util.List;
+//import java.util.Map;
+//
+//import javax.servlet.ServletException;
+//import javax.servlet.http.HttpServletRequest;
+//import javax.servlet.http.HttpServletResponse;
+//import javax.servlet.http.HttpSession;
+//
+//import net.sf.json.JSONArray;
+//import net.sf.json.JSONObject;
+//
+//import org.springframework.beans.factory.annotation.Autowired;
+//import org.springframework.beans.factory.annotation.Qualifier;
+//import org.springframework.stereotype.Controller;
+//import org.springframework.ui.Model;
+//import org.springframework.web.bind.annotation.RequestMapping;
+//import org.springframework.web.bind.annotation.RequestMethod;
+//import org.springframework.web.bind.annotation.ResponseBody;
+//
+//import com.alipay.api.domain.AlipayFundTransToaccountTransferModel;
+//import com.hd.common.util.MD5;
+//import com.hd.microblog.model.dt_admin;
+//import com.hd.microblog.model.dt_chongzhi;
+//import com.hd.microblog.model.dt_information;
+//import com.hd.microblog.model.dt_percent;
+//import com.hd.microblog.model.dt_question;
+//import com.hd.microblog.model.dt_tixian;
+//import com.hd.microblog.model.dt_user;
+//import com.hd.microblog.model.dt_usermoney;
+//import com.hd.microblog.service.dt_adminService;
+//import com.hd.microblog.service.dt_cateService;
+//import com.hd.microblog.service.dt_chongzhiService;
+//import com.hd.microblog.service.dt_informationService;
+//import com.hd.microblog.service.dt_percentService;
+//import com.hd.microblog.service.dt_questionService;
+//import com.hd.microblog.service.dt_tixianService;
+//import com.hd.microblog.service.dt_userService;
+//import com.hd.microblog.service.dt_usermoneyService;
+//import com.hd.microblog.util.alipay;
+//import com.hd.microblog.web.controller.weixin.WeixinUtil;
+//
+//
+//
+//
+//
+//@Controller
+//public class AliPayAPIController {
+//	
+//	@Autowired
+//	@Qualifier("dt_adminService")
+//	private dt_adminService dt_adminservice;
+//	@Autowired
+//	@Qualifier("dt_informationService")
+//	private dt_informationService dt_informationservice;
+//	@Autowired
+//	@Qualifier("dt_questionService")
+//	private dt_questionService dt_questionservice;
+//	@Autowired
+//	@Qualifier("dt_cateService")
+//	private dt_cateService dt_cateservice;
+//	@Autowired
+//	@Qualifier("dt_userService")
+//	private dt_userService dt_userservice;
+//	@Autowired
+//	@Qualifier("dt_usermoneyService")
+//	private dt_usermoneyService dt_usermoneyservice;
+//	@Autowired
+//	@Qualifier("dt_tixianService")
+//	private dt_tixianService dt_tixianservice;
+//	@Autowired
+//	@Qualifier("dt_percentService")
+//	private dt_percentService dt_percentservice;
+//	@Autowired
+//	@Qualifier("dt_chongzhiService")
+//	private dt_chongzhiService dt_chongzhiservice;
+//	
+//	//用户提现次数
+////	@RequestMapping(value = "/tixiannumber", produces = "application/json; charset=utf-8")
+////	@ResponseBody
+////	private String tixiannumber(HttpServletRequest request, HttpServletResponse resp,
+////			Integer u_id) throws IOException {
+////		resp.setHeader("Access-Control-Allow-Origin", "*");
+////		resp.setHeader("Access-Control-Allow-Methods", "GET,POST");
+////		JSONObject json = new JSONObject();
+////		try{
+////			SimpleDateFormat sdf = new SimpleDateFormat("YYYY-MM-dd");
+////			//获取当天零点时间戳
+////			Calendar cal = Calendar.getInstance(); 
+////			cal.set(Calendar.HOUR_OF_DAY, 0); 
+////			cal.set(Calendar.SECOND, 0); 
+////			cal.set(Calendar.MINUTE, 0); 
+////			cal.set(Calendar.MILLISECOND, 0); 
+////			long time = cal.getTimeInMillis()/1000;
+////			System.out.println("当天："+time);
+////			List tixianlist = dt_tixianservice.apifindtixianforu_id(u_id,time);
+////			json.put("tixiannumber", tixianlist.size());
+////			json.put("code", "100");
+////			json.put("rinfo", "查询成功");
+////		}catch(Exception e){
+////			e.printStackTrace();
+////			json.put("code", "400");
+////			json.put("rinfo", "系统错误");
+////		}
+////		return json.toString();
+////	}
+//	//用户提现
+//	@RequestMapping(value = "/tixian", produces = "application/json; charset=utf-8")
+//	@ResponseBody
+//	private String tixian(HttpServletRequest request, HttpServletResponse resp,
+//			Integer u_id,String account,String name,Double money) throws IOException {
+//		resp.setHeader("Access-Control-Allow-Origin", "*");
+//		resp.setHeader("Access-Control-Allow-Methods", "GET,POST");
+//		JSONObject json = new JSONObject();
+//		try{
+//			//获取当天零点时间戳
+//			Calendar cal = Calendar.getInstance(); 
+//			cal.set(Calendar.HOUR_OF_DAY, 0); 
+//			cal.set(Calendar.SECOND, 0); 
+//			cal.set(Calendar.MINUTE, 0); 
+//			cal.set(Calendar.MILLISECOND, 0); 
+//			long time = cal.getTimeInMillis()/1000;
+//			System.out.println("当天："+time);
+//			//查询用户提现列表--当天
+//			List tixianlist = dt_tixianservice.apifindtixianforu_id(u_id,time);
+//			//查询用户信息
+//			dt_user user =dt_userservice.get(u_id);
+//			if(user.getStatus()==1&&tixianlist.size()<20) {
+//				Double money1 = Double.parseDouble(new DecimalFormat("#.##").format(money/100));
+//				Double money2 = Double.parseDouble(new DecimalFormat("#.##").format(money/108));
+//				//限制金额
+//				List percentlist = dt_percentservice.apifindpercentdesc();
+//				dt_percent percent = (dt_percent)percentlist.get(0);
+//				//生成订单号
+//				int sjcode = (int) (Math.random()*9000+1000);
+//				String order_code = String.valueOf(System.currentTimeMillis() / 1000)+sjcode;
+//				if(money2>=percent.getLimitmoney()&&money1<=user.getMoney()){
+//					//更新用户余额
+//					user.setMoney(user.getMoney()-money1);
+//					dt_userservice.saveOrUpdate(user);
+//					//提现表记录
+//					dt_tixian tixian = new dt_tixian();
+//					tixian.setId(u_id);
+//					tixian.setOrdernum(order_code);
+//					tixian.setAccount(account);
+//					tixian.setMoney(money);
+//					tixian.setType(0);
+//					tixian.setInfo("用户"+user.getU_id()+"申请提现"+money2+"元");
+//					tixian.setCreatetime(Integer.valueOf(String.valueOf(System.currentTimeMillis() / 1000)));
+//					dt_tixianservice.saveOrUpdate(tixian);
+//					json.put("code", "100");
+//					json.put("rinfo", "申请提现成功，请等待审核");
+//				}else{
+//					json.put("code", "300");
+//					json.put("rinfo", "申请提现失败");
+//				}
+//			}else {
+//				json.put("code", "200");
+//				json.put("rinfo", "每天只能提现20次，明天再来吧。");
+//			}
+//			
+////			if(money2<percent.getLimitmoney()&&money1<=user.getMoney()){
+////				if(alipay.alipaytx(null,account,name,money2,order_code)==true){
+////					//更新用户余额
+////					user.setMoney(user.getMoney()-money1);
+////					dt_userservice.saveOrUpdate(user);
+////					//提现表记录
+////					dt_tixian tixian = new dt_tixian();
+////					tixian.setId(u_id);
+////					tixian.setOrdernum(order_code);
+////					tixian.setAccount(account);
+////					tixian.setMoney(money);
+////					tixian.setType(1);
+////					tixian.setInfo("用户"+user.getMobile()+"提现"+money2+"元");
+////					tixian.setCreatetime(Integer.valueOf(String.valueOf(System.currentTimeMillis() / 1000)));
+////					dt_tixianservice.saveOrUpdate(tixian);
+////					//金额表记录
+////					dt_usermoney usermoney = new dt_usermoney();
+////					usermoney.setU_id(u_id);
+////					usermoney.setStudent(0);
+////					usermoney.setMoney(money);
+////					usermoney.setInfo("用户"+user.getMobile()+"提现"+money2+"元");
+////					usermoney.setType(5);
+////					usermoney.setCreatetime(Integer.valueOf(String.valueOf(System.currentTimeMillis() / 1000)));
+////					dt_usermoneyservice.saveOrUpdate(usermoney);
+////					//查询上一级信息
+////					dt_user ruser = dt_userservice.get(user.getRefer());
+////					if(ruser!=null){
+////						//更新上一级推荐人信息
+////						ruser.setMoney(ruser.getMoney()+money2*0.09);
+////						ruser.setMoneycount(ruser.getMoneycount()+money2*0.09);
+////						dt_userservice.saveOrUpdate(ruser);
+////						//更新上一级推荐人记录信息
+////						dt_usermoney rusermoney = new dt_usermoney();
+////						rusermoney.setU_id(ruser.getU_id());
+////						rusermoney.setStudent(user.getU_id());
+////						rusermoney.setMoney(money2*9);
+////						rusermoney.setInfo("徒弟"+user.getMobile()+"提现，用户"+ruser.getMobile()+"获得奖励"+money2*9+"豆");
+////						rusermoney.setType(2);
+////						rusermoney.setCreatetime(Integer.valueOf(String.valueOf(System.currentTimeMillis() / 1000)));
+////						dt_usermoneyservice.saveOrUpdate(rusermoney);
+////						//查询上上级推荐人信息
+////						dt_user rruser = dt_userservice.get(ruser.getRefer());
+////						if(rruser!=null){
+////							//更新上上级推荐人信息
+////							rruser.setMoney(rruser.getMoney()+money2*0.03);
+////							rruser.setMoneycount(rruser.getMoneycount()+money2*0.03);
+////							dt_userservice.saveOrUpdate(rruser);
+////							//更新上上级推荐人记录信息
+////							dt_usermoney rrusermoney = new dt_usermoney();
+////							rrusermoney.setU_id(rruser.getU_id());
+////							rrusermoney.setStudent(user.getU_id());
+////							rrusermoney.setMoney(money2*3);
+////							rrusermoney.setInfo("徒孙"+user.getMobile()+"提现，用户"+rruser.getMobile()+"获得奖励"+money2*3+"豆");
+////							rrusermoney.setType(3);
+////							rrusermoney.setCreatetime(Integer.valueOf(String.valueOf(System.currentTimeMillis() / 1000)));
+////							dt_usermoneyservice.saveOrUpdate(rrusermoney);
+////						}
+////					}
+////					json.put("code", "100");
+////					json.put("rinfo", "提现成功");
+////				}else{
+////					json.put("code", "200");
+////					json.put("rinfo", "提现失败");
+////				}
+////			}else if(money2>=percent.getLimitmoney()&&money1<=user.getMoney()){
+////				//更新用户余额
+////				user.setMoney(user.getMoney()-money1);
+////				dt_userservice.saveOrUpdate(user);
+////				//提现表记录
+////				dt_tixian tixian = new dt_tixian();
+////				tixian.setId(u_id);
+////				tixian.setOrdernum(order_code);
+////				tixian.setAccount(account);
+////				tixian.setMoney(money);
+////				tixian.setType(0);
+////				tixian.setInfo("用户"+user.getMobile()+"申请提现"+money2+"元");
+////				tixian.setCreatetime(Integer.valueOf(String.valueOf(System.currentTimeMillis() / 1000)));
+////				dt_tixianservice.saveOrUpdate(tixian);
+////				json.put("code", "100");
+////				json.put("rinfo", "申请提现成功，请等待审核");
+////			}else{
+////				json.put("code", "300");
+////				json.put("rinfo", "申请提现失败");
+////			}
+//		}catch(Exception e){
+//			e.printStackTrace();
+//			json.put("code", "400");
+//			json.put("rinfo", "系统错误");
+//		}
+//		return json.toString();
+//	}
+//	//手机网站支付
+//	@RequestMapping(value = "/alipay", produces = "application/json; charset=utf-8")
+//	@ResponseBody
+//	private void alipay(HttpServletRequest request, HttpServletResponse resp,
+//			Integer u_id,Float money) throws IOException, ServletException {
+//		resp.setHeader("Access-Control-Allow-Origin", "*");
+//		resp.setHeader("Access-Control-Allow-Methods", "GET,POST");
+////		JSONObject json = new JSONObject();
+////		try{
+////			//生成订单号
+////			int sjcode = (int) (Math.random()*9000+1000);
+////			String order_code = String.valueOf(System.currentTimeMillis() / 1000)+sjcode;
+////			String title = "测试";
+////			String form = alipay.doPost(request,resp,order_code,(float) 0.01,title);
+////			json.put("form", form);
+////		}catch(Exception e){
+////			e.printStackTrace();
+////			json.put("code", "400");
+////			json.put("rinfo", "系统错误");
+////		}
+////		return json.toString();
+//		
+//		int sjcode = (int) (Math.random()*9000+1000);
+//		String order_code = String.valueOf(System.currentTimeMillis() / 1000)+sjcode;
+//		//保存充值订单信息
+//		dt_chongzhi chongzhi = new dt_chongzhi();
+//		chongzhi.setU_id(u_id);
+//		chongzhi.setPaynum(order_code);
+//		chongzhi.setMoney(money);
+//		chongzhi.setStatus(0);
+//		chongzhi.setCreatetime(Integer.valueOf(String.valueOf(System.currentTimeMillis() / 1000)));
+//		chongzhi.setType(2);
+//		dt_chongzhiservice.saveOrUpdate(chongzhi);
+//		String title = "小白用户充值";
+//		String form = alipay.doPost(null,null,order_code,money,title);
+//		resp.setContentType("text/html;charset=UTF-8");
+//		resp.getWriter().write(form);//直接将完整的表单html输出到页面
+//		resp.getWriter().flush();
+//		resp.getWriter().close();
+//	}
+//	//支付结果查询
+//	@RequestMapping(value = "/alipayquery", produces = "application/json; charset=utf-8")
+//	@ResponseBody
+//	private String alipayquery(HttpServletRequest request, HttpServletResponse resp) throws IOException, ServletException {
+//		resp.setHeader("Access-Control-Allow-Origin", "*");
+//		resp.setHeader("Access-Control-Allow-Methods", "GET,POST");
+//		JSONObject json = new JSONObject();
+//		try {
+//			List list = dt_chongzhiservice.apifindchongzhilistalireturn();
+//			for(int i=0;i<list.size();i++) {
+//				Map map = (Map)list.get(i);
+//				dt_chongzhi chongzhi = dt_chongzhiservice.get(Integer.valueOf(String.valueOf(map.get("ch_id"))));
+//				String payreturn = alipay.alipaytradequery(null,null,chongzhi.getPaynum());
+//				JSONObject jsonObject = JSONObject.fromObject(payreturn);
+//				if(jsonObject.get("code").toString().equals("10000")){
+//					if(jsonObject.get("trade_status").toString().equals("TRADE_SUCCESS")) {
+//						chongzhi.setStatus(1);
+//						dt_chongzhiservice.saveOrUpdate(chongzhi);
+//						Integer u_id = Integer.valueOf(String.valueOf(map.get("u_id")));
+//						Double money = Double.valueOf(String.valueOf(map.get("money")));
+//						//查询用户信息
+//						dt_user user = dt_userservice.get(u_id);
+//						user.setMoney(user.getMoney()+money);
+//						user.setMoneycount(user.getMoneycount()+money);
+//						dt_userservice.saveOrUpdate(user);
+//						//保存充值信息
+//						dt_usermoney usermoney = new dt_usermoney();
+//						usermoney.setU_id(u_id);
+//						usermoney.setMoney(money*100);
+//						usermoney.setInfo("用户充值"+money+"元成功");
+//						usermoney.setType(7);
+//						usermoney.setCreatetime(Integer.valueOf(String.valueOf(System.currentTimeMillis() / 1000)));
+//						dt_usermoneyservice.saveOrUpdate(usermoney);
+//					}
+//				}
+//			}
+//			json.put("code", "100");
+//			json.put("info", "回调成功");
+//		}catch(Exception e) {
+//			e.printStackTrace();
+//			json.put("code", "400");
+//			json.put("info", "系统错误");
+//		}
+//		
+//		return json.toString();
+//	}
+//	//跳转链接
+//	@RequestMapping(value = "/successful", produces = "application/json; charset=utf-8")
+//	@ResponseBody
+//	private String successful(HttpServletRequest request, HttpServletResponse resp) throws IOException, ServletException {
+//		resp.setHeader("Access-Control-Allow-Origin", "*");
+//		resp.setHeader("Access-Control-Allow-Methods", "GET,POST");
+//		
+//		return "successful";
+//	}
+//	//APP支付
+//	@RequestMapping(value = "/alipayapp", produces = "application/json; charset=utf-8")
+//	@ResponseBody
+//	private String alipayapp(HttpServletRequest request, HttpServletResponse resp,
+//			Integer u_id,Float money) throws IOException, ServletException {
+//		resp.setHeader("Access-Control-Allow-Origin", "*");
+//		resp.setHeader("Access-Control-Allow-Methods", "GET,POST");
+//		JSONObject json = new JSONObject();
+//		try{
+//			//Float money2 = money/100;
+//			int sjcode = (int) (Math.random()*9000+1000);
+//			String order_code = String.valueOf(System.currentTimeMillis() / 1000)+sjcode;
+//			//保存充值订单信息
+//			dt_chongzhi chongzhi = new dt_chongzhi();
+//			chongzhi.setU_id(u_id);
+//			chongzhi.setPaynum(order_code);
+//			chongzhi.setMoney(money);
+//			chongzhi.setStatus(0);
+//			chongzhi.setCreatetime(Integer.valueOf(String.valueOf(System.currentTimeMillis() / 1000)));
+//			chongzhi.setType(2);
+//			dt_chongzhiservice.saveOrUpdate(chongzhi);
+//			String title = "小白用户充值";
+//			String form = alipay.doPostapp(null,null,order_code,money,title);
+//			json.put("form", form);
+//			json.put("code", "100");
+//			json.put("rinfo", "生成成功");
+//		}catch(Exception e){
+//			e.printStackTrace();
+//			json.put("code", "400");
+//			json.put("rinfo", "系统错误");
+//		}
+//		return json.toString();
+//	}
+//}
+//
+//
+//
+//
+//
+//
+//
+//
+//

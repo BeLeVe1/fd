@@ -1,0 +1,84 @@
+package com.hd.microblog.web.controller.admin;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import net.sf.json.JSONObject;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.ResponseBody;
+
+import com.hd.microblog.service.dt_adminService;
+import com.hd.microblog.service.dt_amountService;
+import com.hd.microblog.service.dt_dataprocessService;
+import com.hd.microblog.service.dt_planService;
+import com.hd.microblog.service.dt_sharedpartService;
+
+
+
+
+@Controller
+public class AdminamountController {
+	 
+	@Autowired
+	@Qualifier("dt_adminService")
+	private dt_adminService dt_adminservice;
+	@Autowired
+	@Qualifier("dt_amountService")
+	private dt_amountService dt_amountservice;
+	
+	//制定计划表
+	@RequestMapping("/adminamountlist")
+	public String adminamountlist(HttpServletRequest request, HttpServletResponse resp) 
+			throws IOException {
+		return "admin/amountlist";
+	}
+	//制定计划表
+	@RequestMapping(value = "/adminamountlistajax", method = { RequestMethod.POST }, produces = "application/json; charset=utf-8")
+	@ResponseBody
+	private String adminamountlistajax(HttpServletRequest request, Model model, String page, String rows ,Integer draw 
+			) throws IOException {
+		
+		Integer start = Integer.valueOf(request.getParameter("start"));  
+	    String length = request.getParameter("length");  
+		int number = Integer.valueOf(length);
+		List items = dt_amountservice.adminfindamountlist(start,number);
+		List count = dt_amountservice.adminfindamountlistcount();
+		int countnumber = 0;
+		if (count != null && count.size() != 0) {
+			Map map = (Map) count.get(0);
+			countnumber = Integer.valueOf(String.valueOf(map.get("count")));
+		}
+		List returnlist  = new ArrayList();
+		for(int i=0;i<items.size();i++){
+			Map map = (Map)items.get(i);
+			
+			returnlist.add(map);
+		}
+		
+		JSONObject jobj = new JSONObject();
+		
+		jobj.accumulate("draw", draw);
+		jobj.accumulate("recordsFiltered", countnumber);
+		jobj.accumulate("recordsTotal", countnumber);
+		jobj.accumulate("data", returnlist);
+		return jobj.toString();
+	}
+		
+}
+
+
+
+
+
+

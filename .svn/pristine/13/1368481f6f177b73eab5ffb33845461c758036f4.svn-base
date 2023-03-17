@@ -1,0 +1,106 @@
+package com.hd.microblog.web.controller.admin;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
+
+import net.sf.json.JSONObject;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.ResponseBody;
+
+import com.hd.microblog.model.dt_analysis;
+import com.hd.microblog.service.dt_adminService;
+import com.hd.microblog.service.dt_analysisService;
+import com.hd.microblog.service.dt_predictionService;
+
+
+
+
+@Controller
+public class AdminanalysisController {
+	 
+	@Autowired
+	@Qualifier("dt_analysisService")
+	private dt_analysisService dt_analysisservice;
+	
+	//预测分析表
+	@RequestMapping("/adminanalysislist")
+	public String adminanalysislist(HttpServletRequest request, HttpServletResponse resp) 
+			throws IOException {
+		return "admin/analysislist";
+	}
+	//预测分析表
+	@RequestMapping(value = "/adminanalysislistajax", method = { RequestMethod.POST }, produces = "application/json; charset=utf-8")
+	@ResponseBody
+	private String adminanalysislistajax(HttpServletRequest request, Model model, String page, String rows ,Integer draw 
+			) throws IOException {
+		
+		Integer start = Integer.valueOf(request.getParameter("start"));  
+	    String length = request.getParameter("length");  
+		int number = Integer.valueOf(length);
+		List items = dt_analysisservice.adminfindanalysislist(start,number);
+		List count = dt_analysisservice.adminfindanalysislistcount();
+		int countnumber = 0;
+		if (count != null && count.size() != 0) {
+			Map map = (Map) count.get(0);
+			countnumber = Integer.valueOf(String.valueOf(map.get("count")));
+		}
+		List returnlist  = new ArrayList();
+		for(int i=0;i<items.size();i++){
+			Map map = (Map)items.get(i);
+			
+			returnlist.add(map);
+		}
+		
+		JSONObject jobj = new JSONObject();
+		
+		jobj.accumulate("draw", draw);
+		jobj.accumulate("recordsFiltered", countnumber);
+		jobj.accumulate("recordsTotal", countnumber);
+		jobj.accumulate("data", returnlist);
+		return jobj.toString();
+	}
+//	//测试
+//	@RequestMapping(value = "/test11", produces = "application/json; charset=utf-8")
+//	@ResponseBody
+//	public String test11(HttpServletRequest request, HttpServletResponse resp) throws IOException {
+//		HttpSession session = request.getSession();
+//		resp.setHeader("Access-Control-Allow-Origin", "*");
+//		resp.setHeader("Access-Control-Allow-Methods", "GET,POST");
+//		JSONObject json = new JSONObject();
+//		try {
+//			for(int i=1;i<=200;i++) {
+//				dt_analysis analysis = dt_analysisservice.get(i);
+//				if(analysis!=null) {
+//					analysis.setDataprocess_id(analysis.getAnalysis_id());
+//					dt_analysisservice.saveOrUpdate(analysis);
+//				}
+//			}
+//			json.put("code", "100");
+//			json.put("rinfo", "查询成功");
+//		} catch (Exception e) {
+//			// TODO: handle exception
+//			e.printStackTrace();
+//			json.put("code", "400");
+//			json.put("rinfo", "系统错误");
+//		}
+//		return json.toString();
+//	}
+}
+
+
+
+
+
+

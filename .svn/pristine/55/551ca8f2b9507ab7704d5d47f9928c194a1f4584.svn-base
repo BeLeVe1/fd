@@ -1,0 +1,19 @@
+package com.hd.microblog.service;
+
+import java.util.List;
+import java.util.Map;
+
+import com.hd.common.service.IBaseService;
+import com.hd.microblog.model.dt_dataprocess;
+
+
+public interface dt_dataprocessService  extends IBaseService<dt_dataprocess, Integer> {
+
+	List adminfinddataprocesslist(Integer start, int number);
+
+	List adminfinddataprocesslistcount();
+
+	List adminfinddataprocessslist();
+	
+}
+

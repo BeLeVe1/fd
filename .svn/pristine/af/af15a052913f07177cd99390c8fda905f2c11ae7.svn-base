@@ -1,0 +1,21 @@
+package com.hd.microblog.service;
+
+import java.util.List;
+import java.util.Map;
+
+import com.hd.common.service.IBaseService;
+import com.hd.microblog.model.dt_sharedpart;
+
+
+public interface dt_sharedpartService  extends IBaseService<dt_sharedpart, Integer> {
+
+	List adminfindsharedpartlist(String zbcode,String zbzyd,String qccode,String qcname,String fg,String sort,Integer start, int number);
+
+	List adminfindsharedpartlistcount(String zbcode,String zbzyd,String qccode,String qcname,String fg);
+
+	List adminfindsharedpartlist();
+
+	List adminfindsharedpartfordataprocess_id(int dataprocess_id);
+	
+}
+

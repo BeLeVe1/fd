@@ -1,0 +1,198 @@
+package com.hd.common.util;
+
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.regex.Pattern;
+
+import net.sf.json.JSONObject;
+
+import org.apache.http.Header;
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpResponse;
+import org.apache.http.NameValuePair;
+import org.apache.http.client.ClientProtocolException;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.entity.UrlEncodedFormEntity;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.message.BasicHeader;
+import org.apache.http.message.BasicNameValuePair;
+import org.apache.http.util.EntityUtils;
+
+
+
+/**
+ * httpclient 发送请求工具
+ * @author Administrator
+ *
+ */
+public class HttpClientUtil {
+
+	/**
+	 * Get请求
+	 * @param mobile
+	 * @param content
+	 * @return
+	 */
+	public String clientGetUtil(String mobile, String content){
+		
+		//拼接访问地址
+		String temp ="";
+		try {
+			temp = URLEncoder.encode(content+"【满家福】", "GB2312");//转码
+		} catch (UnsupportedEncodingException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+
+		String url = "http://sdk2.zucp.net:8060/webservice.asmx/SendSMS" +
+				"?sn=DXX-SYG-010-00553&pwd=725485&mobile="+mobile+"&content="+temp;
+		
+		HttpClient httpclient = new DefaultHttpClient();
+		
+		String strResult = null;
+		
+		try {
+			HttpGet httpget = new HttpGet(url);
+			HttpResponse response = httpclient.execute(httpget);
+			HttpEntity entity = response.getEntity();
+			strResult=EntityUtils.toString(entity);
+
+		} catch (ClientProtocolException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}finally{
+		    httpclient.getConnectionManager().shutdown();
+		}
+       
+		return strResult;
+	}
+	
+	
+	
+	public String resjob(String url){
+		
+		//拼接访问地址
+		
+		
+		
+		HttpClient httpclient = new DefaultHttpClient();
+		
+		String strResult = null;
+		
+		try {
+			HttpGet httpget = new HttpGet(url);
+			HttpResponse response = httpclient.execute(httpget);
+			HttpEntity entity = response.getEntity();
+			strResult=EntityUtils.toString(entity);
+
+		} catch (ClientProtocolException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}finally{
+		    httpclient.getConnectionManager().shutdown();
+		}
+       
+		return strResult;
+	}
+	/**
+	 * 
+	 * @param phone  手机号
+	 * @return	 验证结果
+	 */
+	public boolean checkPhone(String phone){
+		if (phone.length()>20) {
+			String phones[]=phone.split(",");
+			if (Pattern.compile("^((13[0-9])|(15[^4,\\D])|(18[0,5-9]))\\d{8}$").matcher(phones[0]).matches()&&Pattern.compile("^((13[0-9])|(15[^4,\\D])|(18[0,5-9]))\\d{8}$").matcher(phones[1]).matches()) {
+				return true;
+			}else{
+				return false;
+			}
+		}else{
+			return Pattern.compile("^((13[0-9])|(15[^4,\\D])|(18[0,5-9]))\\d{8}$").matcher(phone).matches();
+		}
+	}
+	
+	public static <T> T callZhikangInterface(String url, List<NameValue> param, Class<T> t) {
+		String content = "";
+		String getParam = "";
+//		List<NameValuePair> nvpList = new ArrayList<NameValuePair>();
+		//遍历参数
+		for (NameValue nv : param) {
+			if (nv.isContentFlag()) {
+				content += nv.getValue();
+			}
+			getParam += nv.getName() + "=" + nv.getValue() + "&";
+		}
+		getParam = getParam.substring(0, getParam.length() - 1);
+		String plat="java";
+		String sys="WebService";
+		String key="com.xes.sixt";
+		String md5 = MD5.string2MD5(content + plat + sys + key);
+        Header[] headerArray = {new BasicHeader("plat",plat),new BasicHeader("sys",sys),new BasicHeader("appKey",md5)};
+		
+		HttpClient httpclient = new DefaultHttpClient();
+		//httpclient.getParams().setParameter(CoreProtocolPNames.HTTP_CONTENT_CHARSET, "UTF-8");
+		String strResult = null;
+		T c = null;
+		try {
+			HttpGet httpget = new HttpGet(url + "?" + getParam);
+			httpget.setHeaders(headerArray);
+			//httpget.setParams(params);
+			
+			HttpResponse response = httpclient.execute(httpget);
+			HttpEntity entity = response.getEntity();
+			strResult=EntityUtils.toString(entity , "UTF-8");
+			System.out.println(JSONObject.fromObject(strResult));
+			c = (T) JSONObject.toBean(JSONObject.fromObject(strResult), t);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}finally{
+		    httpclient.getConnectionManager().shutdown();
+		}
+		return c;
+	}
+	
+	public void testClient() throws Exception {  
+        HttpClient httpclient = new DefaultHttpClient();  
+        HttpPost httpPost = new HttpPost("******/abc");  
+        List<NameValuePair> nvps = new ArrayList<NameValuePair>();  
+        nvps.add(new BasicNameValuePair("username", "vip"));  
+        nvps.add(new BasicNameValuePair("password", "secret"));  
+        httpPost.setEntity(new UrlEncodedFormEntity(nvps));  
+        httpclient.execute(httpPost);  
+        httpclient.getConnectionManager().shutdown();  
+    }  
+	public static void main(String[] args) {
+		
+		List<NameValue> param = new ArrayList<NameValue>();
+		param.add(new NameValue("loginname", "18511111111", true));
+		param.add(new NameValue("password", "111111", true));
+		param.add(new NameValue("type", "0", true));
+		param.add(new NameValue("loginType", "2", true));
+//		LoginInfo my = HttpClientUtil
+//				.callZhikangInterface("http://59.151.72.91:8082/sixtstrest/rest/familyInfos/familyLogin.json",
+//				param,
+//				LoginInfo.class);
+
+		
+//		param.add(new NameValue("areaCode", "010", true));
+//		param.add(new NameValue("stuId", "1066d4df69487604307763e223cab78f", true));
+//		HttpClientUtil hcu = new HttpClientUtil();
+//		StudentInfo my = HttpClientUtil.callZhikangInterface("http://59.151.72.91:8082/sixtstrest/rest/familyInfos/queryStudentMessage.json",
+//				param,
+//				StudentInfo.class);
+//		System.out.println(my.getRlt());
+	}
+	
+}

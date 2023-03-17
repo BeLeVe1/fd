@@ -1,0 +1,72 @@
+package com.hd.microblog.model;
+
+import java.io.Serializable;
+
+import javax.persistence.Entity;
+import javax.persistence.Id;
+import javax.persistence.Table;
+
+@Entity
+@Table(name="dt_datarecord")
+public class dt_datarecord implements Serializable{
+
+	private static final long serialVersionUID = 1L;
+	@Id
+	public int datarecord_id;
+	public int dataprocess_id;
+	public String text;
+	public int number;
+	public int recordtime;
+	public int admin_id;
+	public int createtime;
+	public int flag;
+	public int getDatarecord_id() {
+		return datarecord_id;
+	}
+	public void setDatarecord_id(int datarecord_id) {
+		this.datarecord_id = datarecord_id;
+	}
+	public int getDataprocess_id() {
+		return dataprocess_id;
+	}
+	public void setDataprocess_id(int dataprocess_id) {
+		this.dataprocess_id = dataprocess_id;
+	}
+	public String getText() {
+		return text;
+	}
+	public void setText(String text) {
+		this.text = text;
+	}
+	public int getNumber() {
+		return number;
+	}
+	public void setNumber(int number) {
+		this.number = number;
+	}
+	public int getRecordtime() {
+		return recordtime;
+	}
+	public void setRecordtime(int recordtime) {
+		this.recordtime = recordtime;
+	}
+	public int getAdmin_id() {
+		return admin_id;
+	}
+	public void setAdmin_id(int admin_id) {
+		this.admin_id = admin_id;
+	}
+	public int getCreatetime() {
+		return createtime;
+	}
+	public void setCreatetime(int createtime) {
+		this.createtime = createtime;
+	}
+	public int getFlag() {
+		return flag;
+	}
+	public void setFlag(int flag) {
+		this.flag = flag;
+	}
+	
+}

@@ -1,0 +1,980 @@
+package com.hd.microblog.web.controller.admin;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.text.DecimalFormat;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
+
+import net.sf.json.JSONObject;
+
+import org.apache.poi.hssf.usermodel.HSSFCell;
+import org.apache.poi.hssf.usermodel.HSSFRow;
+import org.apache.poi.hssf.usermodel.HSSFSheet;
+import org.apache.poi.hssf.usermodel.HSSFWorkbook;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.ResponseBody;
+
+import com.hd.microblog.model.dt_admin;
+import com.hd.microblog.model.dt_dataprocess;
+import com.hd.microblog.model.dt_datarecord;
+import com.hd.microblog.service.dt_adminService;
+import com.hd.microblog.service.dt_dataprocessService;
+import com.hd.microblog.service.dt_datarecordService;
+import com.hd.microblog.util.createxls;
+
+
+
+
+@Controller
+public class AdmindataprocessController {
+	 
+	@Autowired
+	@Qualifier("dt_adminService")
+	private dt_adminService dt_adminservice;
+	@Autowired
+	@Qualifier("dt_dataprocessService")
+	private dt_dataprocessService dt_dataprocessservice;
+	@Autowired
+	@Qualifier("dt_datarecordService")
+	private dt_datarecordService dt_datarecordservice;
+	
+	//数据处理表
+	@RequestMapping("/admindataprocesslist")
+	public String admindataprocesslist(HttpServletRequest request, HttpServletResponse resp) 
+			throws IOException {
+		return "admin/dataprocesslist";
+	}
+	//数据处理表
+	@RequestMapping(value = "/admindataprocesslistajax", method = { RequestMethod.POST }, produces = "application/json; charset=utf-8")
+	@ResponseBody
+	private String admindataprocesslistajax(HttpServletRequest request, Model model, String page, String rows ,Integer draw, 
+			String zbcode,String qccode,String qcname,String fg,String sort) throws IOException {
+		
+		Integer start = Integer.valueOf(request.getParameter("start"));  
+	    String length = request.getParameter("length");  
+		int number = Integer.valueOf(length);
+		List items = dt_dataprocessservice.adminfinddataprocesslist(zbcode,qccode,qcname,fg,sort,start,number);
+		List count = dt_dataprocessservice.adminfinddataprocesslistcount(zbcode,qccode,qcname,fg);
+		int countnumber = 0;
+		if (count != null && count.size() != 0) {
+			Map map = (Map) count.get(0);
+			countnumber = Integer.valueOf(String.valueOf(map.get("count")));
+		}
+		List returnlist  = new ArrayList();
+		for(int i=0;i<items.size();i++){
+			Map map = (Map)items.get(i);
+			
+			returnlist.add(map);
+		}
+		
+		JSONObject jobj = new JSONObject();
+		
+		jobj.accumulate("draw", draw);
+		jobj.accumulate("recordsFiltered", countnumber);
+		jobj.accumulate("recordsTotal", countnumber);
+		jobj.accumulate("data", returnlist);
+		return jobj.toString();
+	}	
+	//数据处理使用记录添加
+	@RequestMapping("/admindatarecordadd")
+	public String admindatarecordadd(HttpServletRequest request, HttpServletResponse resp,
+			Integer dataprocess_id) 
+			throws IOException {
+		request.setAttribute("dataprocess_id", dataprocess_id);
+		return "admin/datarecordadd";
+	}
+	@RequestMapping(value = "/admindatarecordaddajax", method = { RequestMethod.POST }, produces = "application/json; charset=utf-8")
+	@ResponseBody
+	private Map admindatarecordaddajax(HttpServletRequest request,Integer dataprocess_id,String time,
+			String text,Integer number) throws IOException {
+		HttpSession session = request.getSession();
+		Map map = new HashMap<String, String>();
+		try{
+			//获取登录用户信息
+			dt_admin admin = (dt_admin) session.getAttribute("admin");
+			//时间转换成时间戳
+			SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+			//SimpleDateFormat sdf2 = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+			Date date = sdf.parse(time);
+			long recordtime = date.getTime()/1000;
+			//保存记录
+			dt_datarecord datarecord = new dt_datarecord();
+			datarecord.setDataprocess_id(dataprocess_id);
+			datarecord.setText(text);
+			datarecord.setNumber(number);
+			datarecord.setRecordtime(Integer.valueOf(String.valueOf(recordtime)));
+			datarecord.setAdmin_id(1);
+			datarecord.setCreatetime(Integer.valueOf(String.valueOf(System.currentTimeMillis() / 1000)));
+			datarecord.setFlag(0);
+			dt_datarecordservice.saveOrUpdate(datarecord);
+			
+			//获取当年日期
+			Calendar calendar = Calendar.getInstance();
+	        calendar.set(Calendar.MONTH,0);
+	        calendar.set(Calendar.DAY_OF_MONTH,1);
+	        calendar.set(Calendar.HOUR_OF_DAY,0);
+	        calendar.set(Calendar.MINUTE,0);
+	        calendar.set(Calendar.SECOND,0);
+	        calendar.set(Calendar.MILLISECOND,0);
+	        Long time1 = calendar.getTime().getTime()/1000;//1年
+	        
+	        calendar.add(Calendar.MONTH,12);
+	        Long time0 = calendar.getTime().getTime()/1000;//明年
+	        
+	        calendar.add(Calendar.MONTH,-24);
+	        Long time2 = calendar.getTime().getTime()/1000;//2年
+	        
+	        calendar.add(Calendar.MONTH,-12);
+	        Long time3 = calendar.getTime().getTime()/1000;//3年
+	        
+	        calendar.add(Calendar.MONTH,-12);
+	        Long time4 = calendar.getTime().getTime()/1000;//4年
+	        
+	        calendar.add(Calendar.MONTH,-12);
+	        Long time5 = calendar.getTime().getTime()/1000;//5年
+	        
+	        calendar.add(Calendar.MONTH,-12);
+	        Long time6 = calendar.getTime().getTime()/1000;//6年
+	        
+	        calendar.add(Calendar.MONTH,-12);
+	        Long time7 = calendar.getTime().getTime()/1000;//7年
+	        
+	        calendar.add(Calendar.MONTH,-12);
+	        Long time8 = calendar.getTime().getTime()/1000;//8年
+	        
+	        calendar.add(Calendar.MONTH,-12);
+	        Long time9 = calendar.getTime().getTime()/1000;//9年
+	        
+	        calendar.add(Calendar.MONTH,-12);
+	        Long time10 = calendar.getTime().getTime()/1000;//10年
+	        
+	        dt_dataprocess  dataprocess = dt_dataprocessservice.get(dataprocess_id);
+	        if(recordtime>=time1&&recordtime<time0) {
+	        	dataprocess.setAge1(dataprocess.getAge1()+number);
+	        }else if(recordtime>=time2&&recordtime<time1) {
+	        	dataprocess.setAge2(dataprocess.getAge2()+number);
+	        }else if(recordtime>=time3&&recordtime<time2) {
+	        	dataprocess.setAge3(dataprocess.getAge3()+number);
+	        }else if(recordtime>=time4&&recordtime<time3) {
+	        	dataprocess.setAge4(dataprocess.getAge4()+number);
+	        }else if(recordtime>=time5&&recordtime<time4) {
+	        	dataprocess.setAge5(dataprocess.getAge5()+number);
+	        }else if(recordtime>=time6&&recordtime<time5) {
+	        	dataprocess.setAge6(dataprocess.getAge6()+number);
+	        }else if(recordtime>=time7&&recordtime<time6) {
+	        	dataprocess.setAge7(dataprocess.getAge7()+number);
+	        }else if(recordtime>=time8&&recordtime<time7) {
+	        	dataprocess.setAge8(dataprocess.getAge8()+number);
+	        }else if(recordtime>=time9&&recordtime<time8) {
+	        	dataprocess.setAge9(dataprocess.getAge9()+number);
+	        }else if(recordtime>=time10&&recordtime<time9) {
+	        	dataprocess.setAge10(dataprocess.getAge10()+number);
+	        }
+	        dt_dataprocessservice.saveOrUpdate(dataprocess);
+	        
+			map.put("code", "100");
+			map.put("info", "添加成功");
+		}catch(Exception e){
+			e.printStackTrace();
+			map.put("code", "400");
+			map.put("info", "添加失败");
+		}
+		return map;
+	}
+	//数据添加记录
+	@RequestMapping("/admindatarecordlist")
+	public String admindatarecordlist(HttpServletRequest request, HttpServletResponse resp,
+			Integer type,Integer dataprocess_id,Integer flag) 
+			throws IOException {
+		request.setAttribute("flag", flag);
+		request.setAttribute("type", type);
+		request.setAttribute("dataprocess_id", dataprocess_id);
+		return "admin/datarecordlist";
+	}
+	@RequestMapping(value = "/admindatarecordlistajax", method = { RequestMethod.POST }, produces = "application/json; charset=utf-8")
+	@ResponseBody
+	private String admindatarecordlistajax(HttpServletRequest request, Model model, String page, String rows ,Integer draw,
+			Integer type,Integer dataprocess_id,Integer flag) throws IOException {
+		
+		//获取当年日期
+		Calendar calendar = Calendar.getInstance();
+        calendar.set(Calendar.MONTH,0);
+        calendar.set(Calendar.DAY_OF_MONTH,1);
+        calendar.set(Calendar.HOUR_OF_DAY,0);
+        calendar.set(Calendar.MINUTE,0);
+        calendar.set(Calendar.SECOND,0);
+        calendar.set(Calendar.MILLISECOND,0);
+        Long time1 = calendar.getTime().getTime()/1000;//1年
+        
+        calendar.add(Calendar.MONTH,12);
+        Long time0 = calendar.getTime().getTime()/1000;//明年
+        
+        calendar.add(Calendar.MONTH,-24);
+        Long time2 = calendar.getTime().getTime()/1000;//2年
+        
+        calendar.add(Calendar.MONTH,-12);
+        Long time3 = calendar.getTime().getTime()/1000;//3年
+        
+        calendar.add(Calendar.MONTH,-12);
+        Long time4 = calendar.getTime().getTime()/1000;//4年
+        
+        calendar.add(Calendar.MONTH,-12);
+        Long time5 = calendar.getTime().getTime()/1000;//5年
+        
+        calendar.add(Calendar.MONTH,-12);
+        Long time6 = calendar.getTime().getTime()/1000;//6年
+        
+        calendar.add(Calendar.MONTH,-12);
+        Long time7 = calendar.getTime().getTime()/1000;//7年
+        
+        calendar.add(Calendar.MONTH,-12);
+        Long time8 = calendar.getTime().getTime()/1000;//8年
+        
+        calendar.add(Calendar.MONTH,-12);
+        Long time9 = calendar.getTime().getTime()/1000;//9年
+        
+        calendar.add(Calendar.MONTH,-12);
+        Long time10 = calendar.getTime().getTime()/1000;//10年
+		
+		Long starttime = (long) 0;
+		Long endtime = (long) 0;
+		if(type==0) {
+			starttime = (long) 0;
+			endtime = time0;
+		}else if(type==1) {
+			starttime = time1;
+			endtime = time0;
+		}else if(type==2) {
+			starttime = time2;
+			endtime = time1;
+		}else if(type==3) {
+			starttime = time3;
+			endtime = time2;
+		}else if(type==4) {
+			starttime = time4;
+			endtime = time3;
+		}else if(type==5) {
+			starttime = time5;
+			endtime = time4;
+		}else if(type==6) {
+			starttime = time6;
+			endtime = time5;
+		}else if(type==7) {
+			starttime = time7;
+			endtime = time6;
+		}else if(type==8) {
+			starttime = time8;
+			endtime = time7;
+		}else if(type==9) {
+			starttime = time9;
+			endtime = time8;
+		}else if(type==10) {
+			starttime = time10;
+			endtime = time9;
+		}
+		
+		Integer start = Integer.valueOf(request.getParameter("start"));  
+	    String length = request.getParameter("length");  
+		int number = Integer.valueOf(length);
+		List items = dt_datarecordservice.adminfinddatarecordlist(start,number,dataprocess_id,flag,starttime,endtime);
+		List count = dt_datarecordservice.adminfinddatarecordlistcount(dataprocess_id,flag,starttime,endtime);
+		int countnumber = 0;
+		if (count != null && count.size() != 0) {
+			Map map = (Map) count.get(0);
+			countnumber = Integer.valueOf(String.valueOf(map.get("count")));
+		}
+		List returnlist  = new ArrayList();
+		for(int i=0;i<items.size();i++){
+			Map map = (Map)items.get(i);
+			//时间转换
+			SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+			Long time = Long.valueOf(String.valueOf(map.get("recordtime")))*1000;
+			Date date = new Date(time);
+			map.put("recordtime",sdf.format(date));
+			returnlist.add(map);
+		}
+		
+		JSONObject jobj = new JSONObject();
+		
+		jobj.accumulate("draw", draw);
+		jobj.accumulate("recordsFiltered", countnumber);
+		jobj.accumulate("recordsTotal", countnumber);
+		jobj.accumulate("data", returnlist);
+		return jobj.toString();
+	}	
+	//数据处理添加
+	@RequestMapping("/admindataprocessadd")
+	public String admindataprocessadd(HttpServletRequest request, HttpServletResponse resp,
+			Integer dataprocess_id) 
+			throws IOException {
+		if(dataprocess_id!=null) {
+			dt_dataprocess  dataprocess = dt_dataprocessservice.get(dataprocess_id);
+			request.setAttribute("dataprocess", dataprocess);
+			request.setAttribute("dataprocess_id", dataprocess.getDataprocess_id());
+		}else {
+			request.setAttribute("dataprocess", null);
+			request.setAttribute("dataprocess_id", 0);
+		}
+		return "admin/dataprocessadd";
+	}
+	@RequestMapping(value = "/admindataprocessaddajax", method = { RequestMethod.POST }, produces = "application/json; charset=utf-8")
+	@ResponseBody
+	private Map admindataprocessaddajax(HttpServletRequest request,String zbcode,String qccode,
+			String qcname,String ggjh,String unit,Double unitprice,Integer dzys,String fg,
+			Double length,Double width,Double height,Double weight,Integer dataprocess_id) throws IOException {
+		HttpSession session = request.getSession();
+		Map map = new HashMap<String, String>();
+		try{
+			//获取登录用户信息
+			dt_admin admin = (dt_admin) session.getAttribute("admin");
+			if(dataprocess_id==0) {
+				dt_dataprocess  dataprocess = new dt_dataprocess();
+		        dataprocess.setZbcode(zbcode);
+		        dataprocess.setQccode(qccode);
+		        dataprocess.setQcname(qcname);
+		        dataprocess.setGgjh(ggjh);
+		        dataprocess.setUnit(unit);
+		        dataprocess.setUnitprice(unitprice);
+		        dataprocess.setDzys(dzys);
+		        dataprocess.setFg(fg);
+		        dataprocess.setLength(length);
+		        dataprocess.setWidth(width);
+		        dataprocess.setHeight(height);
+		        dataprocess.setWeight(weight);
+		        dataprocess.setYcff(1);
+		        dataprocess.setAnumber(0.7);
+		        dt_dataprocessservice.saveOrUpdate(dataprocess);
+		        
+				map.put("code", "100");
+				map.put("info", "添加成功");
+			}else {
+				dt_dataprocess  dataprocess = dt_dataprocessservice.get(dataprocess_id);
+		        dataprocess.setZbcode(zbcode);
+		        dataprocess.setQccode(qccode);
+		        dataprocess.setQcname(qcname);
+		        dataprocess.setGgjh(ggjh);
+		        dataprocess.setUnit(unit);
+		        dataprocess.setUnitprice(unitprice);
+		        dataprocess.setDzys(dzys);
+		        dataprocess.setFg(fg);
+		        dataprocess.setLength(length);
+		        dataprocess.setWidth(width);
+		        dataprocess.setHeight(height);
+		        dataprocess.setWeight(weight);
+		        dt_dataprocessservice.saveOrUpdate(dataprocess);
+		        
+				map.put("code", "100");
+				map.put("info", "更新成功");
+			}
+	        
+		}catch(Exception e){
+			e.printStackTrace();
+			map.put("code", "400");
+			map.put("info", "系统错误");
+		}
+		return map;
+	}
+	//数据处理删除
+	@RequestMapping(value = "/admindataprocessdelete", method = { RequestMethod.POST }, produces = "application/json; charset=utf-8")
+	@ResponseBody
+	private Map admindataprocessdelete(HttpServletRequest request,Integer id) throws IOException {
+		HttpSession session = request.getSession();
+		Map map = new HashMap<String, String>();
+		try{
+	        dt_dataprocessservice.delete(id);
+			map.put("code", "100");
+			map.put("info", "删除成功");
+		}catch(Exception e){
+			e.printStackTrace();
+			map.put("code", "400");
+			map.put("info", "添加失败");
+		}
+		return map;
+	}
+	//数据处理批量删除
+	@RequestMapping(value = "/admindataprocessbatchdelete", method = { RequestMethod.POST }, produces = "application/json; charset=utf-8")
+	@ResponseBody
+	private Map admindataprocessbatchdelete(HttpServletRequest request,String str) throws IOException {
+		Map map = new HashMap<String, String>();
+		try{
+			String[] strid = str.split("&");
+			for(int i=0;i<strid.length;i++){
+				dt_dataprocessservice.delete(Integer.valueOf(strid[i]));
+			}
+			map.put("code", "100");
+		}catch(Exception e){
+			e.printStackTrace();
+			map.put("code", "400");
+		}
+		return map;
+	}	
+	//Excel生成
+	@RequestMapping(value = "/admindataprocessExcel",produces = "application/json; charset=utf-8")
+	@ResponseBody
+	private String admindataprocessExcel(HttpServletRequest request,HttpServletResponse resp) throws IOException {
+		HttpSession session = request.getSession();
+		resp.setHeader("Access-Control-Allow-Origin", "*");
+		resp.setHeader("Access-Control-Allow-Methods", "GET,POST");
+		JSONObject json = new JSONObject();
+		try{
+			//生成xls表头
+			List<String> header = new ArrayList<String>(); // 第一行数据
+			List<List<String>> body = new ArrayList<List<String>>();
+			header.add("装备代码");
+		    header.add("器材代码");
+		    header.add("器材名称");
+		    header.add("规格件号");
+		    header.add("单位");
+		    header.add("单价");
+		    header.add("单装用数");
+		    header.add("分工");
+		    header.add("长度");
+		    header.add("宽度");
+		    header.add("高度");
+		    header.add("重量");
+		    header.add("年份1");
+		    header.add("年份2");
+		    header.add("年份3");
+		    header.add("年份4");
+		    header.add("年份5");
+		    header.add("年份6");
+		    header.add("年份7");
+		    header.add("年份8");
+		    header.add("年份9");
+		    header.add("年份10");
+		    
+		    List<String> data1 = new ArrayList<String>();
+			data1.add("");
+			data1.add("");
+			data1.add("");
+			data1.add("");
+			data1.add("");
+			data1.add("");
+			data1.add("");
+			data1.add("");
+			data1.add("");
+			data1.add("");
+			data1.add("");
+			data1.add("");
+			data1.add("");
+			data1.add("");
+			data1.add("");
+			data1.add("");
+			data1.add("");
+			data1.add("");
+			data1.add("");
+			data1.add("");
+			data1.add("");
+			data1.add("");
+	    	body.add(data1);
+		    
+		    
+		    List items = dt_dataprocessservice.adminfinddataprocessslist();
+			for(int i=0;i<items.size();i++){
+				Map map = (Map)items.get(i);
+				//添加xls信息
+				List<String> data = new ArrayList<String>();
+				data.add(String.valueOf(map.get("zbcode")));
+				data.add(String.valueOf(map.get("qccode")));
+				data.add(String.valueOf(map.get("qcname")));
+				data.add(String.valueOf(map.get("ggjh")));
+				data.add(String.valueOf(map.get("unit")));
+				data.add(String.valueOf(map.get("unitprice")));
+				data.add(String.valueOf(map.get("dzys")));
+				data.add(String.valueOf(map.get("fg")));
+				data.add(String.valueOf(map.get("length")));
+				data.add(String.valueOf(map.get("width")));
+				data.add(String.valueOf(map.get("height")));
+				data.add(String.valueOf(map.get("weight")));
+				data.add(String.valueOf(map.get("age1")));
+				data.add(String.valueOf(map.get("age2")));
+				data.add(String.valueOf(map.get("age3")));
+				data.add(String.valueOf(map.get("age4")));
+				data.add(String.valueOf(map.get("age5")));
+				data.add(String.valueOf(map.get("age6")));
+				data.add(String.valueOf(map.get("age7")));
+				data.add(String.valueOf(map.get("age8")));
+				data.add(String.valueOf(map.get("age9")));
+				data.add(String.valueOf(map.get("age10")));
+		    	body.add(data);
+		    	
+			}
+			//xls输出
+			String loadpath = request.getSession().getServletContext().getRealPath("/") + "..//upload" + File.separator;
+		    //新建文件路径
+		    File file2 = new File(loadpath);
+			if (!file2.exists()) {
+				file2.mkdir();
+			}
+			try(OutputStream out = new FileOutputStream(loadpath+"/"+"数据处理.xls")){
+				createxls.generateExcel("Sheet1", header, body, out);
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+			json.put("code", "100");
+			json.put("info", "生成成功");
+		}catch(Exception e){
+			e.printStackTrace();
+			json.put("code", "400");
+			json.put("info", "系统错误");
+		}
+		return json.toString();
+	}
+	//导入Excel表格
+	@RequestMapping("/admindataprocessexcelimport")
+	public String admindataprocessexcelimport(HttpServletRequest request, HttpServletResponse resp) 
+			throws IOException {
+		return "admin/dataprocessexcelimport";
+	}
+	//导入
+	@RequestMapping(value = "/admindataprocessexcelimportajax", produces = "application/json; charset=utf-8")
+	@ResponseBody
+	public String admindataprocessexcelimportajax(HttpServletRequest request, HttpServletResponse resp,String filename) throws IOException {
+		HttpSession session = request.getSession();
+		resp.setHeader("Access-Control-Allow-Origin", "*");
+		resp.setHeader("Access-Control-Allow-Methods", "GET,POST");
+		JSONObject json = new JSONObject();
+		try {
+			String loadpath = request.getSession().getServletContext().getRealPath("/") + "..//upload" + File.separator;
+			String xlsfile = loadpath+"/"+filename;
+			File xlsFile = new File(xlsfile);     
+			/*
+			 * 1.XSSFWorkbook 
+			 * 2.HSSFWorkbook
+			 */
+	        // 获得工作簿
+			HSSFWorkbook workbook = new HSSFWorkbook(new FileInputStream(xlsFile));
+
+	        // 获得工作表
+	        HSSFSheet sheet = workbook.getSheetAt(0);
+
+	        int rows = sheet.getPhysicalNumberOfRows();
+
+	        for (int i = 2; i < 200; i++) {//rows
+	            // 获取第i行数据
+	            HSSFRow sheetRow = sheet.getRow(i);
+//	            String str = "";
+//	            // 获取第0格数据
+//	            for(int j = 0; j < 11; j++) {
+//	            	HSSFCell cell = sheetRow.getCell(j);
+//		            // 调用toString方法获取内容
+//	            	str+=cell+" ";
+////		            System.out.println(cell);
+//	            }
+//	            System.out.println(str);
+	            
+	            HSSFCell zbcode = sheetRow.getCell(0);
+	            HSSFCell qccode = sheetRow.getCell(1);
+	            HSSFCell qcname = sheetRow.getCell(2);
+	            HSSFCell ggjh = sheetRow.getCell(3);
+	            HSSFCell unit = sheetRow.getCell(4);
+	            HSSFCell unitprice = sheetRow.getCell(5);
+	            HSSFCell dzys = sheetRow.getCell(6);
+	            HSSFCell fg = sheetRow.getCell(7);
+	            HSSFCell length = sheetRow.getCell(8);
+	            HSSFCell width = sheetRow.getCell(9);
+	            HSSFCell height = sheetRow.getCell(10);
+	            HSSFCell weight = sheetRow.getCell(11);
+	            HSSFCell age1 = sheetRow.getCell(12);
+	            HSSFCell age2 = sheetRow.getCell(13);
+	            HSSFCell age3 = sheetRow.getCell(14);
+	            HSSFCell age4 = sheetRow.getCell(15);
+	            HSSFCell age5 = sheetRow.getCell(16);
+	            HSSFCell age6 = sheetRow.getCell(17);
+	            HSSFCell age7 = sheetRow.getCell(18);
+	            HSSFCell age8 = sheetRow.getCell(19);
+	            HSSFCell age9 = sheetRow.getCell(20);
+	            HSSFCell age10 = sheetRow.getCell(21);
+	            
+	            List dataprocesslist = dt_dataprocessservice.adminfinddataprocesslistforqccode(String.valueOf(qccode));
+	            if(dataprocesslist.size()>0) {
+	            	dt_dataprocess dataprocess = (dt_dataprocess)dataprocesslist.get(0);
+//		            dt_dataprocess dataprocess = new dt_dataprocess();
+//		            dataprocess.setZbcode(String.valueOf(zbcode));
+//		            dataprocess.setQccode(String.valueOf(qccode));
+//		            dataprocess.setQcname(String.valueOf(qcname));
+//		            dataprocess.setGgjh(String.valueOf(ggjh));
+//		            dataprocess.setUnit(String.valueOf(unit));
+//		            dataprocess.setUnitprice(Double.valueOf(String.valueOf(unitprice)));
+//		            if(String.valueOf(dzys).equals("")) {
+//		            	dataprocess.setDzys(0);
+//		            }else {
+//		            	dataprocess.setDzys(Integer.valueOf(String.valueOf(dzys)));
+//		            }
+//		            dataprocess.setFg(String.valueOf(fg));
+//		            dataprocess.setLength(Double.valueOf(String.valueOf(length)));
+//		            dataprocess.setWidth(Double.valueOf(String.valueOf(width)));
+//		            dataprocess.setHeight(Double.valueOf(String.valueOf(height)));
+//		            dataprocess.setWeight(Double.valueOf(String.valueOf(weight)));
+		            if(String.valueOf(age1).equals("")) {
+		            	dataprocess.setAge1(dataprocess.getAge1()+0);
+		            }else {
+		            	dataprocess.setAge1(dataprocess.getAge1()+Double.valueOf(String.valueOf(age1)));
+		            }
+		            if(String.valueOf(age2).equals("")) {
+		            	dataprocess.setAge2(dataprocess.getAge2()+0);
+		            }else {
+		            	dataprocess.setAge2(dataprocess.getAge2()+Double.valueOf(String.valueOf(age2)));
+		            }
+		            if(String.valueOf(age3).equals("")) {
+		            	dataprocess.setAge3(dataprocess.getAge3()+0);
+		            }else {
+		            	dataprocess.setAge3(dataprocess.getAge3()+Double.valueOf(String.valueOf(age3)));
+		            }
+		            if(String.valueOf(age4).equals("")) {
+		            	dataprocess.setAge4(dataprocess.getAge4()+0);
+		            }else {
+		            	dataprocess.setAge4(dataprocess.getAge4()+Double.valueOf(String.valueOf(age4)));
+		            }
+		            if(String.valueOf(age5).equals("")) {
+		            	dataprocess.setAge5(dataprocess.getAge5()+0);
+		            }else {
+		            	dataprocess.setAge5(dataprocess.getAge5()+Double.valueOf(String.valueOf(age5)));
+		            }
+		            if(String.valueOf(age6).equals("")) {
+		            	dataprocess.setAge6(dataprocess.getAge6()+0);
+		            }else {
+		            	dataprocess.setAge6(dataprocess.getAge6()+Double.valueOf(String.valueOf(age6)));
+		            }
+		            if(String.valueOf(age7).equals("")) {
+		            	dataprocess.setAge7(dataprocess.getAge7()+0);
+		            }else {
+		            	dataprocess.setAge7(dataprocess.getAge7()+Double.valueOf(String.valueOf(age7)));
+		            }
+		            if(String.valueOf(age8).equals("")) {
+		            	dataprocess.setAge8(dataprocess.getAge8()+0);
+		            }else {
+		            	dataprocess.setAge8(dataprocess.getAge8()+Double.valueOf(String.valueOf(age8)));
+		            }
+		            if(String.valueOf(age9).equals("")) {
+		            	dataprocess.setAge9(dataprocess.getAge9()+0);
+		            }else {
+		            	dataprocess.setAge9(dataprocess.getAge9()+Double.valueOf(String.valueOf(age9)));
+		            }
+		            if(String.valueOf(age10).equals("")) {
+		            	dataprocess.setAge10(dataprocess.getAge10()+0);
+		            }else {
+		            	dataprocess.setAge10(dataprocess.getAge10()+Double.valueOf(String.valueOf(age10)));
+		            }
+		            dt_dataprocessservice.saveOrUpdate(dataprocess);
+	            }else {
+		            dt_dataprocess dataprocess = new dt_dataprocess();
+		            dataprocess.setZbcode(String.valueOf(zbcode));
+		            dataprocess.setQccode(String.valueOf(qccode));
+		            dataprocess.setQcname(String.valueOf(qcname));
+		            dataprocess.setGgjh(String.valueOf(ggjh));
+		            dataprocess.setUnit(String.valueOf(unit));
+		            dataprocess.setUnitprice(Double.valueOf(String.valueOf(unitprice)));
+		            if(String.valueOf(dzys).equals("")) {
+		            	dataprocess.setDzys(1);
+		            }else {
+		            	dataprocess.setDzys(Integer.valueOf(String.valueOf(dzys)));
+		            }
+		            dataprocess.setFg(String.valueOf(fg));
+		            dataprocess.setLength(Double.valueOf(String.valueOf(length)));
+		            dataprocess.setWidth(Double.valueOf(String.valueOf(width)));
+		            dataprocess.setHeight(Double.valueOf(String.valueOf(height)));
+		            dataprocess.setWeight(Double.valueOf(String.valueOf(weight)));
+		            if(String.valueOf(age1).equals("")) {
+		            	dataprocess.setAge1(0);
+		            }else {
+		            	dataprocess.setAge1(Double.valueOf(String.valueOf(age1)));
+		            }
+		            if(String.valueOf(age2).equals("")) {
+		            	dataprocess.setAge2(0);
+		            }else {
+		            	dataprocess.setAge2(Double.valueOf(String.valueOf(age2)));
+		            }
+		            if(String.valueOf(age3).equals("")) {
+		            	dataprocess.setAge3(0);
+		            }else {
+		            	dataprocess.setAge3(Double.valueOf(String.valueOf(age3)));
+		            }
+		            if(String.valueOf(age4).equals("")) {
+		            	dataprocess.setAge4(0);
+		            }else {
+		            	dataprocess.setAge4(Double.valueOf(String.valueOf(age4)));
+		            }
+		            if(String.valueOf(age5).equals("")) {
+		            	dataprocess.setAge5(0);
+		            }else {
+		            	dataprocess.setAge5(Double.valueOf(String.valueOf(age5)));
+		            }
+		            if(String.valueOf(age6).equals("")) {
+		            	dataprocess.setAge6(0);
+		            }else {
+		            	dataprocess.setAge6(Double.valueOf(String.valueOf(age6)));
+		            }
+		            if(String.valueOf(age7).equals("")) {
+		            	dataprocess.setAge7(0);
+		            }else {
+		            	dataprocess.setAge7(Double.valueOf(String.valueOf(age7)));
+		            }
+		            if(String.valueOf(age8).equals("")) {
+		            	dataprocess.setAge8(0);
+		            }else {
+		            	dataprocess.setAge8(Double.valueOf(String.valueOf(age8)));
+		            }
+		            if(String.valueOf(age9).equals("")) {
+		            	dataprocess.setAge9(0);
+		            }else {
+		            	dataprocess.setAge9(Double.valueOf(String.valueOf(age9)));
+		            }
+		            if(String.valueOf(age10).equals("")) {
+		            	dataprocess.setAge10(0);
+		            }else {
+		            	dataprocess.setAge10(Double.valueOf(String.valueOf(age10)));
+		            }
+		            dt_dataprocessservice.saveOrUpdate(dataprocess);
+	            }
+	        }
+			json.put("code", "100");
+			json.put("rinfo", "导入成功");
+		} catch (Exception e) {
+			// TODO: handle exception
+			e.printStackTrace();
+			json.put("code", "400");
+			json.put("rinfo", "系统错误");
+		}
+		return json.toString();
+	}
+	//统计
+	@RequestMapping(value = "/admindataprocessstatistics", produces = "application/json; charset=utf-8")
+	@ResponseBody
+	public String admindataprocessstatistics(HttpServletRequest request, HttpServletResponse resp) throws IOException {
+		HttpSession session = request.getSession();
+		resp.setHeader("Access-Control-Allow-Origin", "*");
+		resp.setHeader("Access-Control-Allow-Methods", "GET,POST");
+		JSONObject json = new JSONObject();
+		try {
+			Integer dataprocess_id=1;
+			
+			//获取当年日期
+			Calendar calendar = Calendar.getInstance();
+			calendar.set(Calendar.MONTH,0);
+			calendar.set(Calendar.DAY_OF_MONTH,1);
+			calendar.set(Calendar.HOUR_OF_DAY,0);
+			calendar.set(Calendar.MINUTE,0);
+			calendar.set(Calendar.SECOND,0);
+			calendar.set(Calendar.MILLISECOND,0);
+			Long time1 = calendar.getTime().getTime()/1000;//1年
+			
+			calendar.add(Calendar.MONTH,12);
+			Long time0 = calendar.getTime().getTime()/1000;//明年
+			
+			calendar.add(Calendar.MONTH,-24);
+			Long time2 = calendar.getTime().getTime()/1000;//2年
+			
+			calendar.add(Calendar.MONTH,-12);
+			Long time3 = calendar.getTime().getTime()/1000;//3年
+			
+			calendar.add(Calendar.MONTH,-12);
+			Long time4 = calendar.getTime().getTime()/1000;//4年
+			
+			calendar.add(Calendar.MONTH,-12);
+			Long time5 = calendar.getTime().getTime()/1000;//5年
+			
+			calendar.add(Calendar.MONTH,-12);
+			Long time6 = calendar.getTime().getTime()/1000;//6年
+			
+			calendar.add(Calendar.MONTH,-12);
+			Long time7 = calendar.getTime().getTime()/1000;//7年
+			
+			calendar.add(Calendar.MONTH,-12);
+			Long time8 = calendar.getTime().getTime()/1000;//8年
+			
+			calendar.add(Calendar.MONTH,-12);
+			Long time9 = calendar.getTime().getTime()/1000;//9年
+			
+			calendar.add(Calendar.MONTH,-12);
+			Long time10 = calendar.getTime().getTime()/1000;//10年
+			
+			
+			for(int i=1;i<=200;i++) {
+				dataprocess_id=i;
+				List list1 = dt_datarecordservice.adminfinddatarecordforrecordtime(time1,time0,dataprocess_id);
+				List list2 = dt_datarecordservice.adminfinddatarecordforrecordtime(time2,time1,dataprocess_id);
+				List list3 = dt_datarecordservice.adminfinddatarecordforrecordtime(time3,time2,dataprocess_id);
+				List list4 = dt_datarecordservice.adminfinddatarecordforrecordtime(time4,time3,dataprocess_id);
+				List list5 = dt_datarecordservice.adminfinddatarecordforrecordtime(time5,time4,dataprocess_id);
+				List list6 = dt_datarecordservice.adminfinddatarecordforrecordtime(time6,time5,dataprocess_id);
+				List list7 = dt_datarecordservice.adminfinddatarecordforrecordtime(time7,time6,dataprocess_id);
+				List list8 = dt_datarecordservice.adminfinddatarecordforrecordtime(time8,time7,dataprocess_id);
+				List list9 = dt_datarecordservice.adminfinddatarecordforrecordtime(time9,time8,dataprocess_id);
+				List list10 = dt_datarecordservice.adminfinddatarecordforrecordtime(time10,time9,dataprocess_id);
+				
+				dt_dataprocess  dataprocess = dt_dataprocessservice.get(dataprocess_id);
+				if (list1.size()>0&&list1!=null) {
+					Map map = (Map) list1.get(0);
+					dataprocess.setAge1(Integer.valueOf(String.valueOf(map.get("number"))));
+				}else {
+					dataprocess.setAge1(0);
+				}
+				if (list2.size()>0&&list2!=null) {
+					Map map = (Map) list2.get(0);
+					dataprocess.setAge2(Integer.valueOf(String.valueOf(map.get("number"))));
+				}else {
+					dataprocess.setAge2(0);
+				}
+				if (list3.size()>0&&list3!=null) {
+					Map map = (Map) list3.get(0);
+					dataprocess.setAge3(Integer.valueOf(String.valueOf(map.get("number"))));
+				}else {
+					dataprocess.setAge3(0);
+				}
+				if (list4.size()>0&&list4!=null) {
+					Map map = (Map) list4.get(0);
+					dataprocess.setAge4(Integer.valueOf(String.valueOf(map.get("number"))));
+				}else {
+					dataprocess.setAge4(0);
+				}
+				if (list5.size()>0&&list5!=null) {
+					Map map = (Map) list5.get(0);
+					dataprocess.setAge5(Integer.valueOf(String.valueOf(map.get("number"))));
+				}else {
+					dataprocess.setAge5(0);
+				}
+				if (list6.size()>0&&list6!=null) {
+					Map map = (Map) list6.get(0);
+					dataprocess.setAge6(Integer.valueOf(String.valueOf(map.get("number"))));
+				}else {
+					dataprocess.setAge6(0);
+				}
+				if (list7.size()>0&&list7!=null) {
+					Map map = (Map) list7.get(0);
+					dataprocess.setAge7(Integer.valueOf(String.valueOf(map.get("number"))));
+				}else {
+					dataprocess.setAge7(0);
+				}
+				if (list8.size()>0&&list8!=null) {
+					Map map = (Map) list8.get(0);
+					dataprocess.setAge8(Integer.valueOf(String.valueOf(map.get("number"))));
+				}else {
+					dataprocess.setAge8(0);
+				}
+				if (list9.size()>0&&list9!=null) {
+					Map map = (Map) list9.get(0);
+					dataprocess.setAge9(Integer.valueOf(String.valueOf(map.get("number"))));
+				}else {
+					dataprocess.setAge9(0);
+				}
+				if (list10.size()>0&&list10!=null) {
+					Map map = (Map) list10.get(0);
+					dataprocess.setAge10(Integer.valueOf(String.valueOf(map.get("number"))));
+				}else {
+					dataprocess.setAge10(0);
+				}
+				dt_dataprocessservice.saveOrUpdate(dataprocess);
+				System.out.println("==="+i);
+			}
+			json.put("code", "100");
+			json.put("rinfo", "查询成功");
+		} catch (Exception e) {
+			// TODO: handle exception
+			e.printStackTrace();
+			json.put("code", "400");
+			json.put("rinfo", "系统错误");
+		}
+		return json.toString();
+	}
+	//测试
+	@RequestMapping(value = "/test11", produces = "application/json; charset=utf-8")
+	@ResponseBody
+	public String test11(HttpServletRequest request, HttpServletResponse resp) throws IOException {
+		HttpSession session = request.getSession();
+		resp.setHeader("Access-Control-Allow-Origin", "*");
+		resp.setHeader("Access-Control-Allow-Methods", "GET,POST");
+		JSONObject json = new JSONObject();
+		try {
+			String loadpath = request.getSession().getServletContext().getRealPath("/") + "..//upload" + File.separator;
+			String xlsfile = loadpath+"/Excel.xls";
+			File xlsFile = new File(xlsfile);
+	        /**
+		    * 1.XSSFWorkbook
+		    * 2.HSSFWorkbook
+	        */
+	        // 获得工作簿
+			HSSFWorkbook workbook = new HSSFWorkbook(new FileInputStream(xlsFile));
+
+	        // 获得工作表
+	        HSSFSheet sheet = workbook.getSheetAt(0);
+
+	        int rows = sheet.getPhysicalNumberOfRows();
+
+	        for (int i = 2; i < rows; i++) {
+	            // 获取第i行数据
+	            HSSFRow sheetRow = sheet.getRow(i);
+	            String str = "";
+	            // 获取第0格数据
+	            for(int j = 0; j < 11; j++) {
+	            	HSSFCell cell = sheetRow.getCell(j);
+		            // 调用toString方法获取内容
+	            	str+=cell+" ";
+//		            System.out.println(cell);
+	            }
+	            System.out.println(str);
+	            
+	            HSSFCell zbcode = sheetRow.getCell(0);
+	            HSSFCell qccode = sheetRow.getCell(1);
+	            HSSFCell qcname = sheetRow.getCell(2);
+	            HSSFCell ggjh = sheetRow.getCell(3);
+	            HSSFCell unit = sheetRow.getCell(4);
+	            HSSFCell unitprice = sheetRow.getCell(5);
+	            HSSFCell dzys = sheetRow.getCell(6);
+	            HSSFCell fg = sheetRow.getCell(7);
+	            HSSFCell length = sheetRow.getCell(8);
+	            HSSFCell width = sheetRow.getCell(9);
+	            HSSFCell height = sheetRow.getCell(10);
+	            HSSFCell weight = sheetRow.getCell(11);
+	            
+	            dt_dataprocess dataprocess = new dt_dataprocess();
+	            dataprocess.setZbcode(String.valueOf(zbcode));
+	            dataprocess.setQccode(String.valueOf(qccode));
+	            dataprocess.setQcname(String.valueOf(qcname));
+	            dataprocess.setGgjh(String.valueOf(ggjh));
+	            dataprocess.setUnit(String.valueOf(unit));
+	            dataprocess.setUnitprice(Double.valueOf(String.valueOf(unitprice)));
+	            if(String.valueOf(dzys).equals("")) {
+	            	dataprocess.setDzys(0);
+	            }else {
+	            	dataprocess.setDzys(Integer.valueOf(String.valueOf(dzys)));
+	            }
+	            dataprocess.setFg(String.valueOf(fg));
+	            dataprocess.setLength(Double.valueOf(String.valueOf(length)));
+	            dataprocess.setWidth(Double.valueOf(String.valueOf(width)));
+	            dataprocess.setHeight(Double.valueOf(String.valueOf(height)));
+	            dataprocess.setWeight(Double.valueOf(String.valueOf(weight)));
+	            dt_dataprocessservice.saveOrUpdate(dataprocess);
+	            
+	        }
+			json.put("code", "100");
+			json.put("rinfo", "查询成功");
+		} catch (Exception e) {
+			// TODO: handle exception
+			e.printStackTrace();
+			json.put("code", "400");
+			json.put("rinfo", "系统错误");
+		}
+		return json.toString();
+	}
+}
+
+

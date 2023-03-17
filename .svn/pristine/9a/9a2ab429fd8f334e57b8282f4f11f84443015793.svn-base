@@ -1,0 +1,229 @@
+package com.hd.microblog.util;
+
+
+
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
+
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import net.sf.json.JSONObject;
+
+import com.alipay.api.AlipayApiException;
+import com.alipay.api.AlipayClient;
+import com.alipay.api.DefaultAlipayClient;
+import com.alipay.api.domain.AlipayFundTransOrderQueryModel;
+import com.alipay.api.domain.AlipayFundTransToaccountTransferModel;
+import com.alipay.api.domain.AlipayTradeAppPayModel;
+import com.alipay.api.request.AlipayFundTransOrderQueryRequest;
+import com.alipay.api.request.AlipayFundTransToaccountTransferRequest;
+import com.alipay.api.request.AlipayTradeAppPayRequest;
+import com.alipay.api.request.AlipayTradeQueryRequest;
+import com.alipay.api.request.AlipayTradeWapPayRequest;
+import com.alipay.api.response.AlipayFundTransOrderQueryResponse;
+import com.alipay.api.response.AlipayFundTransToaccountTransferResponse;
+import com.alipay.api.response.AlipayTradeAppPayResponse;
+import com.alipay.api.response.AlipayTradeQueryResponse;
+
+
+
+
+
+public class alipay {
+	private static Logger log = LoggerFactory.getLogger(alipay.class);
+	static String URL = "https://openapi.alipay.com/gateway.do";
+	static String APP_ID = "2019022163288236";
+	static String APP_PRIVATE_KEY = "MIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQCkvzJMDGAVa+7P\r\n" + 
+			"KmuKJgM49InI2mSY2W8z7SEXlDejsS2ekrQ1u4TOTDEPa2RlcZlhp4iyOYoCkN+n\r\n" + 
+			"QGoadONz1X/LuvaF8zqgs4ALKBJNOHHNwnzF21Dc0wHxmhVL6DOCcsvu5l/oqBq5\r\n" + 
+			"JaG80qhdVdue7vmnuopkj6SLR3tkWdo+25FQxVhUE/dZMV8cG03mdVv7q3CviHBC\r\n" + 
+			"L7SDVn/wpf3Z7UVUYVV/WEqDvP/oCtdgF+aS16ucArtL0OqvIHpzDrNVg1dhbTlt\r\n" + 
+			"m2muXYeJF9L5sc9lYJteRCqpk4WUQq7spSeMZYhD9b1To/E1evr3pEcocQ3HWx9u\r\n" + 
+			"fYuPKP/XAgMBAAECggEAVIJHeL84YoS1QcvO0lThfkviigeNZuLSql5PhVrgl7WB\r\n" + 
+			"Y0B59L42R+TJndFG9MqrFW7tLg9Z/ir2r0LZqqyfKIIyRf2oC9pTDrBFVHO/v6De\r\n" + 
+			"r9++RXhVKJGNA7Q4jHGWSqo8dlXyiNQCsUreho/BEe/C8uo/YozMBP2yOEf4weaK\r\n" + 
+			"wFw8XjnEKJntaDU/Mr/uLZsJqULKw3H69+2jHqZwz73xXZl5HWwn6VjGR6r0BMgs\r\n" + 
+			"31zmhqIAHUUEdjKCVr2iGiG9BUaEvjKGV/GqTmvs3mJTO6UYIPEUOeReYdiUagwq\r\n" + 
+			"vkxbbwK/le9iF0Th/B3IUbwvcJ0APbcciIFwLTqOEQKBgQDUS/ySZNvawKxHcqd0\r\n" + 
+			"VLuNSRcyGTLUcLEGtSe9A9wqIvqXmFsnlSzkhi4YjVO/yBr+JgtRUIKcroxGcoV/\r\n" + 
+			"S/KnW1atsjjGsQ0DhVJQ3bCamogHt9/I+8PeFbsBOtPIRUNGHaJtv7Md+oyOz1de\r\n" + 
+			"CDFB54TA6c45rFjZKmII+scgmwKBgQDGqVVbeGg/EcB+KJYDolOEBLGVY/fDz6B1\r\n" + 
+			"pOg0Uvq2YAIcOhYjmoWABjYvGI//cfqmMdtv17vimUshGvlTd4bC0EqpjMjxbI//\r\n" + 
+			"fLtN5/HwER/jJzIsYWjL4actjuwpyWGLi2lsXDUNk7HzPKZsB0K2vImTpBRM35oR\r\n" + 
+			"wZJnrbBbdQKBgQCat64guqSHrjdf8q0bWM0+0G+5MSgcLuy06L1HQVLo2okqhfyY\r\n" + 
+			"wlzvRuK9PfI1KI6TfgJthnFJ4uOUS84C0cTMNwLan7JFC69iS32MNaSJZ+mPRnAv\r\n" + 
+			"N1yts8SPxuGlaOT4aox/01+kj350baNMgkfzsdjMBxkmavZtfjfoN2t71QKBgQCk\r\n" + 
+			"s7L+uN7EmzUZ4xAsRyIya6nHDzBU+QgxQNz6tGkDVqmpOUctkWho8b1uYlDQGXES\r\n" + 
+			"5HbnTNaKUUkGU1SuLIRfc0zTMNNPxQ/FY2XuewQMYkYrj017me7GSXjOvpVxN3JV\r\n" + 
+			"vOlUW0Xo0bBQ1tGq8oIO+lSdQQVLjn4vhmqY5lk2GQKBgE04bIzBmHOcRCNBVjjx\r\n" + 
+			"dGqF+x18GMHF+NOyBIEkjuk/hpRPWZ9RT8uK8RyLPAT2WfErp9gU5X+xuJx08k7i\r\n" + 
+			"CBqG5wbfSZgZ70XGXhHA3/GQX3ZdWVv2iOPHJQln+T8xQGS5tmlStUgsTIkB68QS\r\n" + 
+			"1bzIiVvJfDrCMbhbkd8o5cgFO";
+	static String FORMAT = "JSON";
+	static String CHARSET = "UTF-8";
+	static String ALIPAY_PUBLIC_KEY = "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAk/sjllNQDLNzXOvCBSctgyslYrn8q48ETWCWBL48KIilBzVvf+nq9awjGbdRzKGfr21EuLjB/PU/FtR/ZUJsNFhy1WS0+pjsL3T3fP+UFekNUZTFoCydJ6/3/nhNkKkoAyh6m26grIqoMfalEM9yM6PEzSfjoE4ueDUD2s/b9Wc0js/Fte/ukLD3C0zvwbf8LvMqKFtOPPn8FOASa6Dv5Kj7RVw3Hss57bUZ47oJlOaFNBoM+w6+TSE3ZPXkKiqADC12Owk0GWmRAWHYriPiRa5Lc5444Ge9yuAHSCV564ylwKNDSFcmGYl118e3wECD6oweDv8Zv9GFyNaWdZg6mQIDAQAB";
+	static String SIGN_TYPE = "RSA2";
+	static AlipayClient alipayClient = new DefaultAlipayClient(URL, APP_ID, APP_PRIVATE_KEY, FORMAT, CHARSET, ALIPAY_PUBLIC_KEY, SIGN_TYPE);
+	
+	
+	/**
+     * 单笔转账到支付宝账户
+     * https://doc.open.alipay.com/docs/doc.htm?spm=a219a.7629140.0.0.54Ty29&treeId=193&articleId=106236&docType=1
+     * @param content
+     * @return
+     * @throws AlipayApiException
+     */
+    public static boolean transfer(AlipayFundTransToaccountTransferModel model) throws AlipayApiException{
+        AlipayFundTransToaccountTransferResponse response = transferToResponse(model);
+        String result = response.getBody();
+        log.info("transfer result>"+result);
+        System.out.println("transfer result>"+result);
+        if (response.isSuccess()) {
+            return true;
+        } else {
+            //调用查询接口查询数据
+            JSONObject jsonObject = JSONObject.fromObject(result);
+            String out_biz_no = jsonObject.getJSONObject("alipay_fund_trans_toaccount_transfer_response").getString("out_biz_no");
+            AlipayFundTransOrderQueryModel queryModel = new AlipayFundTransOrderQueryModel();
+            model.setOutBizNo(out_biz_no);
+            boolean isSuccess = transferQuery(queryModel);
+            if (isSuccess) {
+                return true;
+            }
+        }
+        return false;
+    }
+    public static AlipayFundTransToaccountTransferResponse transferToResponse(AlipayFundTransToaccountTransferModel model) throws AlipayApiException{
+        AlipayFundTransToaccountTransferRequest request = new AlipayFundTransToaccountTransferRequest();
+        request.setBizModel(model);
+        return alipayClient.execute(request);
+    }
+    
+    /**
+     * 转账查询接口
+     * @param content
+     * @return
+     * @throws AlipayApiException
+     */
+    public static boolean transferQuery(AlipayFundTransOrderQueryModel model) throws AlipayApiException{
+        AlipayFundTransOrderQueryResponse response = transferQueryToResponse(model);
+        log.info("transferQuery result>"+response.getBody());
+        System.out.println("transferQuery result>"+response.getBody());
+        if(response.isSuccess()){
+            return true;
+        }
+        return false;
+    }
+    public static AlipayFundTransOrderQueryResponse transferQueryToResponse(AlipayFundTransOrderQueryModel model) throws AlipayApiException{
+        AlipayFundTransOrderQueryRequest request = new AlipayFundTransOrderQueryRequest();
+        request.setBizModel(model);
+        return alipayClient.execute(request);
+    }
+    
+    /**
+     * 单笔转账到支付宝账户
+     * https://doc.open.alipay.com/docs/doc.htm?spm=a219a.7629140.0.0.54Ty29&treeId=193&articleId=106236&docType=1
+     * @return
+     */
+	public static boolean alipaytx(HttpServletRequest request,String account,String name,
+			Double money,String order_code) throws IOException {
+		Map map = new HashMap<String, String>();
+		boolean isSuccess = false;
+        String total_amount = String.valueOf(money);
+        AlipayFundTransToaccountTransferModel model = new AlipayFundTransToaccountTransferModel();
+        System.out.println(order_code);
+        model.setOutBizNo(order_code);//生成订单号
+        model.setPayeeType("ALIPAY_LOGONID");//固定值
+        model.setPayeeAccount(account);//收款方账户
+        model.setAmount(total_amount);//转账金额
+        //model.setPayerShowName("枣庄极客网络科技有限公司");//付款方姓名
+        //model.setPayerRealName(name);//收款方真实姓名
+        model.setRemark("小白赚钱用户提现");//转账备注
+
+        try {
+            isSuccess = alipay.transfer(model);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+		return isSuccess;
+	}
+	//手机网站支付
+	public static String doPost(HttpServletRequest httpRequest,HttpServletResponse httpResponse,
+			String paynum,Float money,String title) throws ServletException, IOException {
+		AlipayClient alipayClient = new DefaultAlipayClient("https://openapi.alipay.com/gateway.do", APP_ID, APP_PRIVATE_KEY, "json", CHARSET, ALIPAY_PUBLIC_KEY, "RSA2"); //获得初始化的AlipayClient
+		AlipayTradeWapPayRequest alipayRequest = new AlipayTradeWapPayRequest();//创建API对应的request
+		alipayRequest.setReturnUrl("http://xiaobai.jikewangluo.cn/renwu/successful");//http://domain.com/CallBack/notify_url.jsp
+		alipayRequest.setNotifyUrl("http://xiaobai.jikewangluo.cn/renwu/alipayquery");//在公共参数中设置回跳和通知地址
+		alipayRequest.setBizContent("{" +
+			" \"out_trade_no\":\""+paynum+"\"," +//商户订单号，需要保证不重复
+			" \"total_amount\":\""+money+"\"," +//订单金额
+			" \"subject\":\""+title+"\"," +//订单标题
+			" \"product_code\":\"QUICK_WAP_PAY\"" +
+			" }");//填充业务参数
+		String form="";
+		try {
+			form = alipayClient.pageExecute(alipayRequest).getBody(); //调用SDK生成表单
+			System.out.println(form);
+		} catch (AlipayApiException e) {
+			e.printStackTrace();
+		}
+		return form;
+//		httpResponse.setContentType("text/html;charset=" + CHARSET);
+//		httpResponse.getWriter().write(form);//直接将完整的表单html输出到页面
+//		httpResponse.getWriter().flush();
+//		httpResponse.getWriter().close();
+	}
+	//支付结果查询
+	public static String alipaytradequery(HttpServletRequest httpRequest,HttpServletResponse httpResponse,
+			String paynum) throws ServletException, IOException {
+		AlipayClient alipayClient = new DefaultAlipayClient("https://openapi.alipay.com/gateway.do", APP_ID, APP_PRIVATE_KEY, "json", CHARSET, ALIPAY_PUBLIC_KEY, "RSA2"); //获得初始化的AlipayClient
+		AlipayTradeQueryRequest request = new AlipayTradeQueryRequest();//创建API对应的request类
+		request.setBizContent("{" +
+		"   \"out_trade_no\":\""+paynum+"\"," +//支付时传入的商户订单号，与trade_no必填一个
+		"   \"trade_no\":\""+""+"\"" +//支付时返回的支付宝交易号，与out_trade_no必填一个
+		"  }");//设置业务参数
+		AlipayTradeQueryResponse response = null;
+		try {
+			response = alipayClient.execute(request);
+		} catch (AlipayApiException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}//通过alipayClient调用API，获得对应的response类
+		System.out.println(response.getBody());
+		//根据response中的结果继续业务逻辑处理
+		return JSONObject.fromObject(response.getBody()).get("alipay_trade_query_response").toString();
+	}
+	//APP支付宝支付
+	public static String doPostapp(HttpServletRequest httpRequest,HttpServletResponse httpResponse,
+			String paynum,Float money,String title) throws ServletException, IOException {
+		//实例化客户端
+		AlipayClient alipayClient = new DefaultAlipayClient("https://openapi.alipay.com/gateway.do", APP_ID, APP_PRIVATE_KEY, "json", CHARSET, ALIPAY_PUBLIC_KEY, "RSA2");
+		//实例化具体API对应的request类,类名称和接口名称对应,当前调用接口名称：alipay.trade.app.pay
+		AlipayTradeAppPayRequest request = new AlipayTradeAppPayRequest();
+		//SDK已经封装掉了公共参数，这里只需要传入业务参数。以下方法为sdk的model入参方式(model和biz_content同时存在的情况下取biz_content)。
+		AlipayTradeAppPayModel model = new AlipayTradeAppPayModel();
+		model.setBody(title);//对一笔交易的具体描述信息
+		model.setSubject(title);//商品的标题/交易标题/订单标题/订单关键字等
+		model.setOutTradeNo(paynum);//商户网站唯一订单号
+		model.setTimeoutExpress("30m");//该笔订单允许的最晚付款时间，逾期将关闭交易
+		model.setTotalAmount(String.valueOf(money));//订单总金额，单位为元，精确到小数点后两位
+		model.setProductCode("QUICK_MSECURITY_PAY");//销售产品码，商家和支付宝签约的产品码，为固定值QUICK_MSECURITY_PAY
+		request.setBizModel(model);
+		request.setNotifyUrl("http://xiaobai.jikewangluo.cn/renwu/alipayquery");//异步通知地址
+		AlipayTradeAppPayResponse response = null;
+		try {
+		        //这里和普通的接口调用不同，使用的是sdkExecute
+		        response = alipayClient.sdkExecute(request);
+		        System.out.println(response.getBody());//就是orderString 可以直接给客户端请求，无需再做处理。
+		    } catch (AlipayApiException e) {
+		        e.printStackTrace();
+		}
+		return response.getBody();
+	}
+}

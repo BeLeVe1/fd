@@ -1,0 +1,107 @@
+package com.hd.microblog.service.impl;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.stereotype.Service;
+
+import com.hd.common.dao.IBaseDao;
+import com.hd.common.service.impl.BaseService;
+import com.hd.microblog.dao.dt_planDao;
+import com.hd.microblog.model.dt_plan;
+import com.hd.microblog.service.dt_planService;
+@Service("dt_planService")
+public class dt_planServiceImpl extends BaseService<dt_plan, Integer> implements dt_planService{
+	private dt_planDao dt_plandao;
+	@Autowired
+	@Qualifier("dt_planDao")
+	@Override
+	public void setBaseDao(IBaseDao<dt_plan, Integer> dt_plandao) {
+		this.baseDao = dt_plandao;
+		this.dt_plandao = (dt_planDao) dt_plandao;
+	}
+	@Override
+	public List adminfindplanlist(String jqcode,String bdcode,String zbcode,String qccode,String qcname,String fg,String sort,Integer start, int number) {
+		// TODO Auto-generated method stub
+		List<Object> paramlist = new ArrayList();
+		String sql = "select d.*,p.plan_id,s.predictionnumber,s.plannumber,s.maxnumber,s.kyd,p.number,p.makingplansnumber,p.thistimeplansnumber,(s.plannumber-p.makingplansnumber-p.number) as lastnumber from dt_dataprocess d left join dt_plan p on d.dataprocess_id=p.dataprocess_id left join dt_sharedpart s on d.dataprocess_id=s.dataprocess_id where 1=1 ";
+		if(jqcode!=""){
+			sql+=" and d.jqcode=? ";
+			paramlist.add(jqcode);
+		}
+		if(bdcode!=""){
+			sql+=" and d.bdcode=? ";
+			paramlist.add(bdcode);
+		}
+		if(zbcode!=""){
+			sql+=" and d.zbcode=? ";
+			paramlist.add(zbcode);
+		}
+		if(qccode!=""){
+			sql+=" and d.qccode=? ";
+			paramlist.add(qccode);
+		}
+		if(qcname!=""){
+			sql+=" and d.qcname=? ";
+			paramlist.add(qcname);
+		}
+		if(fg!=""){
+			sql+=" and d.fg=? ";
+			paramlist.add(fg);
+		}
+		if(sort!=""){
+			if(sort.equals("predictionnumber")||sort.equals("plannumber")) {
+				sql+=" order by s."+sort+" desc ";
+			}else{
+				sql+=" order by p."+sort+" desc ";
+			}
+		}else {
+			sql+=" order by d.qccode asc,d.jqcode asc ";
+		}
+		sql += " limit ?, ? ";
+		paramlist.add(start);
+		paramlist.add(number);
+		return dt_plandao.exesqlrelist(sql, paramlist);
+	}
+	@Override
+	public List adminfindplanlistcount(String jqcode,String bdcode,String zbcode,String qccode,String qcname,String fg) {
+		// TODO Auto-generated method stub
+		List<Object> paramlist = new ArrayList();
+		String sql = "select count(*) count from dt_dataprocess where 1=1 ";
+		if(jqcode!=""){
+			sql+=" and jqcode=? ";
+			paramlist.add(jqcode);
+		}
+		if(bdcode!=""){
+			sql+=" and bdcode=? ";
+			paramlist.add(bdcode);
+		}
+		if(zbcode!=""){
+			sql+=" and zbcode=? ";
+			paramlist.add(zbcode);
+		}
+		if(qccode!=""){
+			sql+=" and qccode=? ";
+			paramlist.add(qccode);
+		}
+		if(qcname!=""){
+			sql+=" and qcname=? ";
+			paramlist.add(qcname);
+		}
+		if(fg!=""){
+			sql+=" and fg=? ";
+			paramlist.add(fg);
+		}
+		return dt_plandao.exesqlrelist(sql, paramlist);
+	}
+	@Override
+	public List adminfindplanlist(String fg) {
+		// TODO Auto-generated method stub
+		String sql = "select d.*,p.plan_id,s.predictionnumber,s.plannumber,p.number,p.makingplansnumber,p.thistimeplansnumber,s.maxnumber,s.kyd,(s.plannumber-p.makingplansnumber-p.number) as lastnumber from dt_dataprocess d left join dt_plan p on d.dataprocess_id=p.dataprocess_id left join dt_sharedpart s on d.dataprocess_id=s.dataprocess_id where d.fg='"+fg+"' ";
+		sql+=" order by d.qccode asc,d.jqcode asc ";
+		return dt_plandao.exesqlrelist(sql, null);
+	}
+}

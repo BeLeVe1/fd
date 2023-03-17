@@ -1,0 +1,55 @@
+package com.hd.microblog.util;
+import java.net.URLEncoder;
+import java.util.HashMap;
+import java.util.Map;
+
+import org.apache.commons.httpclient.DefaultHttpMethodRetryHandler;
+import org.apache.commons.httpclient.HttpClient;
+import org.apache.commons.httpclient.NameValuePair;
+import org.apache.commons.httpclient.methods.PostMethod;
+import org.apache.commons.httpclient.params.HttpMethodParams;
+import org.json.JSONObject;
+
+public class trsmscode {
+
+    //普通短信
+    public Map sendsms(String mobile,String smscode) throws Exception {
+    	Map map = new HashMap();
+        HttpClient httpClient = new HttpClient();
+        PostMethod postMethod = new PostMethod("http://api.1cloudsp.com/api/v2/single_send");
+        postMethod.getParams().setContentCharset("UTF-8");
+        postMethod.getParams().setParameter(HttpMethodParams.RETRY_HANDLER,new DefaultHttpMethodRetryHandler());
+
+        String accesskey = "beXoZ8XQ1pcQiMXZ"; //用户开发key
+        String accessSecret = "yVsfWNoR1qo2BgXzDuH5iao3IuGYLmaj"; //用户开发秘钥
+
+        NameValuePair[] data = {
+                new NameValuePair("accesskey", accesskey),
+                new NameValuePair("secret", accessSecret),
+                new NameValuePair("sign", "【小白赚钱】"),
+                new NameValuePair("templateId", "10224"),
+                new NameValuePair("mobile", mobile),
+                new NameValuePair("content", URLEncoder.encode(smscode, "utf-8"))//（示例模板：{1}您好，您的订单于{2}已通过{3}发货，运单号{4}）
+        };
+        postMethod.setRequestBody(data);
+        postMethod.setRequestHeader("Connection", "close");
+
+        int statusCode = httpClient.executeMethod(postMethod);
+        System.out.println("statusCode: " + statusCode + ", body: "
+                    + postMethod.getResponseBodyAsString());
+        map.put("statusCode", statusCode);
+        map.put("body", postMethod.getResponseBodyAsString());
+        return map;
+    }
+
+    public static void main(String[] args) throws Exception {
+        trsmscode t = new trsmscode();
+        //普通短信
+        String mobile = "18663223225";
+        int code = (int) (Math.random() * 9000 + 1000);
+		String smscode = String.valueOf(code);
+		System.out.println(smscode);
+		Map map = t.sendsms(mobile,smscode);
+        System.out.println("====="+map);
+    }
+}

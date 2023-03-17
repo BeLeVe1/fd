@@ -1,0 +1,1020 @@
+package com.hd.microblog.web.controller.admin;
+
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.text.DecimalFormat;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
+
+import net.sf.json.JSONObject;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.ResponseBody;
+
+import com.hd.microblog.model.dt_dataprocess;
+import com.hd.microblog.model.dt_prediction;
+import com.hd.microblog.service.dt_adminService;
+import com.hd.microblog.service.dt_dataprocessService;
+import com.hd.microblog.service.dt_predictionService;
+import com.hd.microblog.util.createxls;
+
+
+
+
+@Controller
+public class AdminpredictionController {
+	 
+	@Autowired
+	@Qualifier("dt_predictionService")
+	private dt_predictionService dt_predictionservice;
+	@Autowired
+	@Qualifier("dt_dataprocessService")
+	private dt_dataprocessService dt_dataprocessservice;
+	
+	//预测查询表
+	@RequestMapping("/adminpredictionlist")
+	public String adminpredictionlist(HttpServletRequest request, HttpServletResponse resp) 
+			throws IOException {
+		return "admin/predictionlist";
+	}
+	//预测查询表
+	@RequestMapping(value = "/adminpredictionlistajax", method = { RequestMethod.POST }, produces = "application/json; charset=utf-8")
+	@ResponseBody
+	private String adminpredictionlistajax(HttpServletRequest request, Model model, String page, String rows ,Integer draw,
+			String jqcode,String bdcode,String zbcode,String qccode,String qcname,String sort) throws IOException {
+		
+		Integer start = Integer.valueOf(request.getParameter("start"));
+	    String length = request.getParameter("length");  
+		int number = Integer.valueOf(length);
+		List items = dt_predictionservice.adminfindpredictionlist(jqcode,bdcode,zbcode,qccode,qcname,sort,start,number);
+		List count = dt_predictionservice.adminfindpredictionlistcount(jqcode,bdcode,zbcode,qccode,qcname);
+		int countnumber = 0;
+		if (count != null && count.size() != 0) {
+			Map map = (Map) count.get(0);
+			countnumber = Integer.valueOf(String.valueOf(map.get("count")));
+		}
+		List returnlist  = new ArrayList();
+		for(int i=0;i<items.size();i++){
+			Map map = (Map)items.get(i);
+			if(Integer.valueOf(String.valueOf(map.get("ycff")))==1) {
+				map.put("ycffname", "简单移动平均法");
+			}else if(Integer.valueOf(String.valueOf(map.get("ycff")))==2) {
+				map.put("ycffname", "指数平滑法");
+			}else if(Integer.valueOf(String.valueOf(map.get("ycff")))==3) {
+				map.put("ycffname", "线性回归法");
+			}else if(Integer.valueOf(String.valueOf(map.get("ycff")))==4) {
+				map.put("ycffname", "误差平方和倒数组合预测");
+			}
+			returnlist.add(map);
+		}
+		JSONObject jobj = new JSONObject();
+		
+		jobj.accumulate("draw", draw);
+		jobj.accumulate("recordsFiltered", countnumber);
+		jobj.accumulate("recordsTotal", countnumber);
+		jobj.accumulate("data", returnlist);
+		return jobj.toString();
+	}
+	//统计
+	@RequestMapping(value = "/adminpredictionstatistics",produces = "application/json; charset=utf-8")
+	@ResponseBody
+	private String adminpredictionstatistics(HttpServletRequest request,HttpServletResponse resp) throws IOException {
+		HttpSession session = request.getSession();
+		resp.setHeader("Access-Control-Allow-Origin", "*");
+		resp.setHeader("Access-Control-Allow-Methods", "GET,POST");
+		JSONObject json = new JSONObject();
+		try{
+			List list = dt_predictionservice.adminfindpredictionlistall();
+			for(int i=0;i<800;i++){//list.size()
+				Map map = (Map)list.get(i);
+				
+				dt_prediction prediction = dt_predictionservice.get(Integer.valueOf(String.valueOf(map.get("prediction_id"))));
+				if(prediction.getYcff()==1) {
+					Map returnmap1 = (Map)Standarddeviation(prediction.getDataprocess_id(),1);
+					Map returnmap2 = (Map)Standarddeviation(prediction.getDataprocess_id(),2);
+					Map returnmap3 = (Map)Standarddeviation(prediction.getDataprocess_id(),3);
+					Map returnmap4 = (Map)Standarddeviation(prediction.getDataprocess_id(),4);
+					Map returnmap5 = (Map)Standarddeviation(prediction.getDataprocess_id(),5);
+					Map returnmap6 = (Map)Standarddeviation(prediction.getDataprocess_id(),6);
+					Map returnmap7 = (Map)Standarddeviation(prediction.getDataprocess_id(),7);
+					Map returnmap8 = (Map)Standarddeviation(prediction.getDataprocess_id(),8);
+					Map returnmap9 = (Map)Standarddeviation(prediction.getDataprocess_id(),9);
+					Map returnmap10 = (Map)Standarddeviation(prediction.getDataprocess_id(),10);
+					//预测值
+					prediction.setYcz1(String.valueOf(returnmap1.get("Average")));
+					prediction.setYcz2(String.valueOf(returnmap2.get("Average")));
+					prediction.setYcz3(String.valueOf(returnmap3.get("Average")));
+					prediction.setYcz4(String.valueOf(returnmap4.get("Average")));
+					prediction.setYcz5(String.valueOf(returnmap5.get("Average")));
+					prediction.setYcz6(String.valueOf(returnmap6.get("Average")));
+					prediction.setYcz7(String.valueOf(returnmap7.get("Average")));
+					prediction.setYcz8(String.valueOf(returnmap8.get("Average")));
+					prediction.setYcz9(String.valueOf(returnmap9.get("Average")));
+					prediction.setYcz10(String.valueOf(returnmap10.get("Average")));
+					//标准差
+					prediction.setBzc1(String.valueOf(returnmap1.get("result")));
+					prediction.setBzc2(String.valueOf(returnmap2.get("result")));
+					prediction.setBzc3(String.valueOf(returnmap3.get("result")));
+					prediction.setBzc4(String.valueOf(returnmap4.get("result")));
+					prediction.setBzc5(String.valueOf(returnmap5.get("result")));
+					prediction.setBzc6(String.valueOf(returnmap6.get("result")));
+					prediction.setBzc7(String.valueOf(returnmap7.get("result")));
+					prediction.setBzc8(String.valueOf(returnmap8.get("result")));
+					prediction.setBzc9(String.valueOf(returnmap9.get("result")));
+					prediction.setBzc10(String.valueOf(returnmap10.get("result")));
+					//真实值
+					prediction.setZsz1(String.valueOf(returnmap1.get("real")));
+					prediction.setZsz2(String.valueOf(returnmap2.get("real")));
+					prediction.setZsz3(String.valueOf(returnmap3.get("real")));
+					prediction.setZsz4(String.valueOf(returnmap4.get("real")));
+					prediction.setZsz5(String.valueOf(returnmap5.get("real")));
+					prediction.setZsz6(String.valueOf(returnmap6.get("real")));
+					prediction.setZsz7(String.valueOf(returnmap7.get("real")));
+					prediction.setZsz8(String.valueOf(returnmap8.get("real")));
+					prediction.setZsz9(String.valueOf(returnmap9.get("real")));
+					prediction.setZsz10(String.valueOf(returnmap10.get("real")));
+					//方差
+					prediction.setFx1(String.valueOf(returnmap1.get("fx")));
+					prediction.setFx2(String.valueOf(returnmap2.get("fx")));
+					prediction.setFx3(String.valueOf(returnmap3.get("fx")));
+					prediction.setFx4(String.valueOf(returnmap4.get("fx")));
+					prediction.setFx5(String.valueOf(returnmap5.get("fx")));
+					prediction.setFx6(String.valueOf(returnmap6.get("fx")));
+					prediction.setFx7(String.valueOf(returnmap7.get("fx")));
+					prediction.setFx8(String.valueOf(returnmap8.get("fx")));
+					prediction.setFx9(String.valueOf(returnmap9.get("fx")));
+					prediction.setFx10(String.valueOf(returnmap10.get("fx")));
+				}
+				if(prediction.getYcff()==2) {
+					Map returnmap1 = (Map)Standarddeviation2(prediction.getDataprocess_id(),1);
+					Map returnmap2 = (Map)Standarddeviation2(prediction.getDataprocess_id(),2);
+					Map returnmap3 = (Map)Standarddeviation2(prediction.getDataprocess_id(),3);
+					Map returnmap4 = (Map)Standarddeviation2(prediction.getDataprocess_id(),4);
+					Map returnmap5 = (Map)Standarddeviation2(prediction.getDataprocess_id(),5);
+					Map returnmap6 = (Map)Standarddeviation2(prediction.getDataprocess_id(),6);
+					Map returnmap7 = (Map)Standarddeviation2(prediction.getDataprocess_id(),7);
+					Map returnmap8 = (Map)Standarddeviation2(prediction.getDataprocess_id(),8);
+					Map returnmap9 = (Map)Standarddeviation2(prediction.getDataprocess_id(),9);
+					Map returnmap10 = (Map)Standarddeviation2(prediction.getDataprocess_id(),10);
+					//预测值
+					prediction.setYcz1(String.valueOf(returnmap1.get("Average")));
+					prediction.setYcz2(String.valueOf(returnmap2.get("Average")));
+					prediction.setYcz3(String.valueOf(returnmap3.get("Average")));
+					prediction.setYcz4(String.valueOf(returnmap4.get("Average")));
+					prediction.setYcz5(String.valueOf(returnmap5.get("Average")));
+					prediction.setYcz6(String.valueOf(returnmap6.get("Average")));
+					prediction.setYcz7(String.valueOf(returnmap7.get("Average")));
+					prediction.setYcz8(String.valueOf(returnmap8.get("Average")));
+					prediction.setYcz9(String.valueOf(returnmap9.get("Average")));
+					prediction.setYcz10(String.valueOf(returnmap10.get("Average")));
+					//标准差
+					prediction.setBzc1(String.valueOf(returnmap1.get("result")));
+					prediction.setBzc2(String.valueOf(returnmap2.get("result")));
+					prediction.setBzc3(String.valueOf(returnmap3.get("result")));
+					prediction.setBzc4(String.valueOf(returnmap4.get("result")));
+					prediction.setBzc5(String.valueOf(returnmap5.get("result")));
+					prediction.setBzc6(String.valueOf(returnmap6.get("result")));
+					prediction.setBzc7(String.valueOf(returnmap7.get("result")));
+					prediction.setBzc8(String.valueOf(returnmap8.get("result")));
+					prediction.setBzc9(String.valueOf(returnmap9.get("result")));
+					prediction.setBzc10(String.valueOf(returnmap10.get("result")));
+					//真实值
+					prediction.setZsz1(String.valueOf(returnmap1.get("real")));
+					prediction.setZsz2(String.valueOf(returnmap2.get("real")));
+					prediction.setZsz3(String.valueOf(returnmap3.get("real")));
+					prediction.setZsz4(String.valueOf(returnmap4.get("real")));
+					prediction.setZsz5(String.valueOf(returnmap5.get("real")));
+					prediction.setZsz6(String.valueOf(returnmap6.get("real")));
+					prediction.setZsz7(String.valueOf(returnmap7.get("real")));
+					prediction.setZsz8(String.valueOf(returnmap8.get("real")));
+					prediction.setZsz9(String.valueOf(returnmap9.get("real")));
+					prediction.setZsz10(String.valueOf(returnmap10.get("real")));
+					//方差
+					prediction.setFx1(String.valueOf(returnmap1.get("fx")));
+					prediction.setFx2(String.valueOf(returnmap2.get("fx")));
+					prediction.setFx3(String.valueOf(returnmap3.get("fx")));
+					prediction.setFx4(String.valueOf(returnmap4.get("fx")));
+					prediction.setFx5(String.valueOf(returnmap5.get("fx")));
+					prediction.setFx6(String.valueOf(returnmap6.get("fx")));
+					prediction.setFx7(String.valueOf(returnmap7.get("fx")));
+					prediction.setFx8(String.valueOf(returnmap8.get("fx")));
+					prediction.setFx9(String.valueOf(returnmap9.get("fx")));
+					prediction.setFx10(String.valueOf(returnmap10.get("fx")));
+				}
+				if(prediction.getYcff()==3) {
+					//预测值
+					Map returnmap1 = (Map)Standarddeviation3(prediction.getDataprocess_id(),1);
+					Map returnmap2 = (Map)Standarddeviation3(prediction.getDataprocess_id(),2);
+					Map returnmap3 = (Map)Standarddeviation3(prediction.getDataprocess_id(),3);
+					Map returnmap4 = (Map)Standarddeviation3(prediction.getDataprocess_id(),4);
+					Map returnmap5 = (Map)Standarddeviation3(prediction.getDataprocess_id(),5);
+					Map returnmap6 = (Map)Standarddeviation3(prediction.getDataprocess_id(),6);
+					Map returnmap7 = (Map)Standarddeviation3(prediction.getDataprocess_id(),7);
+					Map returnmap8 = (Map)Standarddeviation3(prediction.getDataprocess_id(),8);
+					Map returnmap9 = (Map)Standarddeviation3(prediction.getDataprocess_id(),9);
+					Map returnmap10 = (Map)Standarddeviation3(prediction.getDataprocess_id(),10);
+					//预测值
+					prediction.setYcz1(String.valueOf(returnmap1.get("Average")));
+					prediction.setYcz2(String.valueOf(returnmap2.get("Average")));
+					prediction.setYcz3(String.valueOf(returnmap3.get("Average")));
+					prediction.setYcz4(String.valueOf(returnmap4.get("Average")));
+					prediction.setYcz5(String.valueOf(returnmap5.get("Average")));
+					prediction.setYcz6(String.valueOf(returnmap6.get("Average")));
+					prediction.setYcz7(String.valueOf(returnmap7.get("Average")));
+					prediction.setYcz8(String.valueOf(returnmap8.get("Average")));
+					prediction.setYcz9(String.valueOf(returnmap9.get("Average")));
+					prediction.setYcz10(String.valueOf(returnmap10.get("Average")));
+					//标准差
+					prediction.setBzc1(String.valueOf(returnmap1.get("result")));
+					prediction.setBzc2(String.valueOf(returnmap2.get("result")));
+					prediction.setBzc3(String.valueOf(returnmap3.get("result")));
+					prediction.setBzc4(String.valueOf(returnmap4.get("result")));
+					prediction.setBzc5(String.valueOf(returnmap5.get("result")));
+					prediction.setBzc6(String.valueOf(returnmap6.get("result")));
+					prediction.setBzc7(String.valueOf(returnmap7.get("result")));
+					prediction.setBzc8(String.valueOf(returnmap8.get("result")));
+					prediction.setBzc9(String.valueOf(returnmap9.get("result")));
+					prediction.setBzc10(String.valueOf(returnmap10.get("result")));
+					//真实值
+					prediction.setZsz1(String.valueOf(returnmap1.get("real")));
+					prediction.setZsz2(String.valueOf(returnmap2.get("real")));
+					prediction.setZsz3(String.valueOf(returnmap3.get("real")));
+					prediction.setZsz4(String.valueOf(returnmap4.get("real")));
+					prediction.setZsz5(String.valueOf(returnmap5.get("real")));
+					prediction.setZsz6(String.valueOf(returnmap6.get("real")));
+					prediction.setZsz7(String.valueOf(returnmap7.get("real")));
+					prediction.setZsz8(String.valueOf(returnmap8.get("real")));
+					prediction.setZsz9(String.valueOf(returnmap9.get("real")));
+					prediction.setZsz10(String.valueOf(returnmap10.get("real")));
+					//方差
+					prediction.setFx1(String.valueOf(returnmap1.get("fx")));
+					prediction.setFx2(String.valueOf(returnmap2.get("fx")));
+					prediction.setFx3(String.valueOf(returnmap3.get("fx")));
+					prediction.setFx4(String.valueOf(returnmap4.get("fx")));
+					prediction.setFx5(String.valueOf(returnmap5.get("fx")));
+					prediction.setFx6(String.valueOf(returnmap6.get("fx")));
+					prediction.setFx7(String.valueOf(returnmap7.get("fx")));
+					prediction.setFx8(String.valueOf(returnmap8.get("fx")));
+					prediction.setFx9(String.valueOf(returnmap9.get("fx")));
+					prediction.setFx10(String.valueOf(returnmap10.get("fx")));
+				}
+				if(prediction.getYcff()==4) {
+					//预测值
+					Map returnmap1 = (Map)Standarddeviation4(prediction.getDataprocess_id(),1);
+					Map returnmap2 = (Map)Standarddeviation4(prediction.getDataprocess_id(),2);
+					Map returnmap3 = (Map)Standarddeviation4(prediction.getDataprocess_id(),3);
+					Map returnmap4 = (Map)Standarddeviation4(prediction.getDataprocess_id(),4);
+					Map returnmap5 = (Map)Standarddeviation4(prediction.getDataprocess_id(),5);
+					Map returnmap6 = (Map)Standarddeviation4(prediction.getDataprocess_id(),6);
+					Map returnmap7 = (Map)Standarddeviation4(prediction.getDataprocess_id(),7);
+					Map returnmap8 = (Map)Standarddeviation4(prediction.getDataprocess_id(),8);
+					Map returnmap9 = (Map)Standarddeviation4(prediction.getDataprocess_id(),9);
+					Map returnmap10 = (Map)Standarddeviation4(prediction.getDataprocess_id(),10);
+					//预测值
+					prediction.setYcz1(String.valueOf(returnmap1.get("Average")));
+					prediction.setYcz2(String.valueOf(returnmap2.get("Average")));
+					prediction.setYcz3(String.valueOf(returnmap3.get("Average")));
+					prediction.setYcz4(String.valueOf(returnmap4.get("Average")));
+					prediction.setYcz5(String.valueOf(returnmap5.get("Average")));
+					prediction.setYcz6(String.valueOf(returnmap6.get("Average")));
+					prediction.setYcz7(String.valueOf(returnmap7.get("Average")));
+					prediction.setYcz8(String.valueOf(returnmap8.get("Average")));
+					prediction.setYcz9(String.valueOf(returnmap9.get("Average")));
+					prediction.setYcz10(String.valueOf(returnmap10.get("Average")));
+					//标准差
+					prediction.setBzc1(String.valueOf(returnmap1.get("result")));
+					prediction.setBzc2(String.valueOf(returnmap2.get("result")));
+					prediction.setBzc3(String.valueOf(returnmap3.get("result")));
+					prediction.setBzc4(String.valueOf(returnmap4.get("result")));
+					prediction.setBzc5(String.valueOf(returnmap5.get("result")));
+					prediction.setBzc6(String.valueOf(returnmap6.get("result")));
+					prediction.setBzc7(String.valueOf(returnmap7.get("result")));
+					prediction.setBzc8(String.valueOf(returnmap8.get("result")));
+					prediction.setBzc9(String.valueOf(returnmap9.get("result")));
+					prediction.setBzc10(String.valueOf(returnmap10.get("result")));
+					//真实值
+					prediction.setZsz1(String.valueOf(returnmap1.get("real")));
+					prediction.setZsz2(String.valueOf(returnmap2.get("real")));
+					prediction.setZsz3(String.valueOf(returnmap3.get("real")));
+					prediction.setZsz4(String.valueOf(returnmap4.get("real")));
+					prediction.setZsz5(String.valueOf(returnmap5.get("real")));
+					prediction.setZsz6(String.valueOf(returnmap6.get("real")));
+					prediction.setZsz7(String.valueOf(returnmap7.get("real")));
+					prediction.setZsz8(String.valueOf(returnmap8.get("real")));
+					prediction.setZsz9(String.valueOf(returnmap9.get("real")));
+					prediction.setZsz10(String.valueOf(returnmap10.get("real")));
+					//方差
+					prediction.setFx1(String.valueOf(returnmap1.get("fx")));
+					prediction.setFx2(String.valueOf(returnmap2.get("fx")));
+					prediction.setFx3(String.valueOf(returnmap3.get("fx")));
+					prediction.setFx4(String.valueOf(returnmap4.get("fx")));
+					prediction.setFx5(String.valueOf(returnmap5.get("fx")));
+					prediction.setFx6(String.valueOf(returnmap6.get("fx")));
+					prediction.setFx7(String.valueOf(returnmap7.get("fx")));
+					prediction.setFx8(String.valueOf(returnmap8.get("fx")));
+					prediction.setFx9(String.valueOf(returnmap9.get("fx")));
+					prediction.setFx10(String.valueOf(returnmap10.get("fx")));
+				}
+				dt_predictionservice.saveOrUpdate(prediction);
+				
+				System.out.println("==="+i);
+			}
+			json.put("code", "100");
+			json.put("info", "统计成功，请刷新页面");
+		}catch(Exception e){
+			e.printStackTrace();
+			json.put("code", "400");
+			json.put("info", "系统错误");
+		}
+		return json.toString();
+	}
+	//标准差计算--移动平均法
+	private JSONObject Standarddeviation(Integer dataprocess_id,Integer agenumbner) throws IOException {
+		JSONObject json = new JSONObject();
+		DecimalFormat df = new DecimalFormat("#.00");
+		Double Average=(double) 0;
+		Double result=(double) 0;
+		Double real=(double) 0;
+		Double fx=(double) 0;
+		dt_dataprocess dataprocess = dt_dataprocessservice.get(dataprocess_id);
+		if(agenumbner==1) {
+			Average= Double.valueOf(df.format((double)(dataprocess.getAge2()+dataprocess.getAge3()+dataprocess.getAge4()+dataprocess.getAge5()+dataprocess.getAge6()+dataprocess.getAge7()+dataprocess.getAge8()+dataprocess.getAge9()+dataprocess.getAge10())/9));
+			Double number = (Math.pow((Double.valueOf(dataprocess.getAge2())-Average),2)+Math.pow((Double.valueOf(dataprocess.getAge3())-Average),2)+Math.pow((Double.valueOf(dataprocess.getAge4())-Average),2)+Math.pow((Double.valueOf(dataprocess.getAge5())-Average),2)+Math.pow((Double.valueOf(dataprocess.getAge6())-Average),2)+Math.pow((Double.valueOf(dataprocess.getAge7())-Average),2)+Math.pow((Double.valueOf(dataprocess.getAge8())-Average),2)+Math.pow((Double.valueOf(dataprocess.getAge9())-Average),2)+Math.pow((Double.valueOf(dataprocess.getAge10())-Average),2))/9;
+			result = Double.valueOf(df.format(Math.sqrt(number)));
+			real = Double.valueOf(dataprocess.getAge1());
+			fx = number;
+		}else if(agenumbner==2) {
+			Average= Double.valueOf(df.format((double)(dataprocess.getAge3()+dataprocess.getAge4()+dataprocess.getAge5()+dataprocess.getAge6()+dataprocess.getAge7()+dataprocess.getAge8()+dataprocess.getAge9()+dataprocess.getAge10())/8));
+			Double number = (Math.pow((Double.valueOf(dataprocess.getAge3())-Average),2)+Math.pow((Double.valueOf(dataprocess.getAge4())-Average),2)+Math.pow((Double.valueOf(dataprocess.getAge5())-Average),2)+Math.pow((Double.valueOf(dataprocess.getAge6())-Average),2)+Math.pow((Double.valueOf(dataprocess.getAge7())-Average),2)+Math.pow((Double.valueOf(dataprocess.getAge8())-Average),2)+Math.pow((Double.valueOf(dataprocess.getAge9())-Average),2)+Math.pow((Double.valueOf(dataprocess.getAge10())-Average),2))/8;
+			result = Double.valueOf(df.format(Math.sqrt(number)));
+			real = Double.valueOf(dataprocess.getAge2());
+			fx = number;
+		}else if(agenumbner==3) {
+			Average= Double.valueOf(df.format((double)(dataprocess.getAge4()+dataprocess.getAge5()+dataprocess.getAge6()+dataprocess.getAge7()+dataprocess.getAge8()+dataprocess.getAge9()+dataprocess.getAge10())/7));
+			Double number = (Math.pow((Double.valueOf(dataprocess.getAge4())-Average),2)+Math.pow((Double.valueOf(dataprocess.getAge5())-Average),2)+Math.pow((Double.valueOf(dataprocess.getAge6())-Average),2)+Math.pow((Double.valueOf(dataprocess.getAge7())-Average),2)+Math.pow((Double.valueOf(dataprocess.getAge8())-Average),2)+Math.pow((Double.valueOf(dataprocess.getAge9())-Average),2)+Math.pow((Double.valueOf(dataprocess.getAge10())-Average),2))/7;
+			result = Double.valueOf(df.format(Math.sqrt(number)));
+			real = Double.valueOf(dataprocess.getAge3());
+			fx = number;
+		}else if(agenumbner==4) {
+			Average= Double.valueOf(df.format((double)(dataprocess.getAge5()+dataprocess.getAge6()+dataprocess.getAge7()+dataprocess.getAge8()+dataprocess.getAge9()+dataprocess.getAge10())/6));
+			Double number = (Math.pow((Double.valueOf(dataprocess.getAge5())-Average),2)+Math.pow((Double.valueOf(dataprocess.getAge6())-Average),2)+Math.pow((Double.valueOf(dataprocess.getAge7())-Average),2)+Math.pow((Double.valueOf(dataprocess.getAge8())-Average),2)+Math.pow((Double.valueOf(dataprocess.getAge9())-Average),2)+Math.pow((Double.valueOf(dataprocess.getAge10())-Average),2))/6;
+			result = Double.valueOf(df.format(Math.sqrt(number)));
+			real = Double.valueOf(dataprocess.getAge4());
+			fx = number;
+		}else if(agenumbner==5) {
+			Average= Double.valueOf(df.format((double)(dataprocess.getAge6()+dataprocess.getAge7()+dataprocess.getAge8()+dataprocess.getAge9()+dataprocess.getAge10())/5));
+			Double number = (Math.pow((Double.valueOf(dataprocess.getAge6())-Average),2)+Math.pow((Double.valueOf(dataprocess.getAge7())-Average),2)+Math.pow((Double.valueOf(dataprocess.getAge8())-Average),2)+Math.pow((Double.valueOf(dataprocess.getAge9())-Average),2)+Math.pow((Double.valueOf(dataprocess.getAge10())-Average),2))/5;
+			result = Double.valueOf(df.format(Math.sqrt(number)));
+			real = Double.valueOf(dataprocess.getAge5());
+			fx = number;
+		}else if(agenumbner==6) {
+			Average= Double.valueOf(df.format((double)(dataprocess.getAge7()+dataprocess.getAge8()+dataprocess.getAge9()+dataprocess.getAge10())/4));
+			Double number = (Math.pow((Double.valueOf(dataprocess.getAge7())-Average),2)+Math.pow((Double.valueOf(dataprocess.getAge8())-Average),2)+Math.pow((Double.valueOf(dataprocess.getAge9())-Average),2)+Math.pow((Double.valueOf(dataprocess.getAge10())-Average),2))/4;
+			result = Double.valueOf(df.format(Math.sqrt(number)));
+			real = Double.valueOf(dataprocess.getAge6());
+			fx = number;
+		}else if(agenumbner==7) {
+			Average= Double.valueOf(df.format((double)(dataprocess.getAge8()+dataprocess.getAge9()+dataprocess.getAge10())/3));
+			Double number = (Math.pow((Double.valueOf(dataprocess.getAge8())-Average),2)+Math.pow((Double.valueOf(dataprocess.getAge9())-Average),2)+Math.pow((Double.valueOf(dataprocess.getAge10())-Average),2))/3;
+			result = Double.valueOf(df.format(Math.sqrt(number)));
+			real = Double.valueOf(dataprocess.getAge7());
+			fx = number;
+		}else if(agenumbner==8) {
+			Average= Double.valueOf(df.format((double)(dataprocess.getAge9()+dataprocess.getAge10())/2));
+			Double number = (Math.pow((Double.valueOf(dataprocess.getAge9())-Average),2)+Math.pow((Double.valueOf(dataprocess.getAge10())-Average),2))/2;
+			result = Double.valueOf(df.format(Math.sqrt(number)));
+			real = Double.valueOf(dataprocess.getAge8());
+			fx = number;
+		}else if(agenumbner==9) {
+			Average= Double.valueOf(df.format((double)(dataprocess.getAge10())/1));
+			Double number = (Math.pow((Double.valueOf(dataprocess.getAge10())-Average),2))/1;
+			result = Double.valueOf(df.format(Math.sqrt(number)));
+			real = Double.valueOf(dataprocess.getAge9());
+			fx = number;
+		}else if(agenumbner==10) {
+			Average= Double.valueOf(df.format((double)(dataprocess.getAge10())/1));
+			Double number = (Math.pow((Double.valueOf(dataprocess.getAge10())-Average),2))/1;
+			result = Double.valueOf(df.format(Math.sqrt(number)));
+			real = Double.valueOf(dataprocess.getAge10());
+			fx = number;
+		}
+		json.put("Average", Average);
+		json.put("result", result);
+		json.put("real", real);
+		json.put("fx", Double.valueOf(df.format(fx)));
+		return json;
+	}
+	//标准差计算--指数平滑法
+	private JSONObject Standarddeviation2(Integer dataprocess_id,Integer agenumbner) throws IOException {
+		JSONObject json = new JSONObject();
+		DecimalFormat df = new DecimalFormat("#.00");
+		Double Average=(double) 0;
+		Double result=(double) 0;
+		Double real=(double) 0;
+		Double fx=(double) 0;
+		dt_dataprocess dataprocess = dt_dataprocessservice.get(dataprocess_id);
+		//预测值
+		Double Average10 = (double) dataprocess.getAge10();
+		Double Average9 = dataprocess.getAnumber()*dataprocess.getAge10()+(1-dataprocess.getAnumber())*Average10;
+		Double Average8 = dataprocess.getAnumber()*dataprocess.getAge9()+(1-dataprocess.getAnumber())*Average9;
+		Double Average7 = dataprocess.getAnumber()*dataprocess.getAge8()+(1-dataprocess.getAnumber())*Average8;
+		Double Average6 = dataprocess.getAnumber()*dataprocess.getAge7()+(1-dataprocess.getAnumber())*Average7;
+		Double Average5 = dataprocess.getAnumber()*dataprocess.getAge6()+(1-dataprocess.getAnumber())*Average6;
+		Double Average4 = dataprocess.getAnumber()*dataprocess.getAge5()+(1-dataprocess.getAnumber())*Average5;
+		Double Average3 = dataprocess.getAnumber()*dataprocess.getAge4()+(1-dataprocess.getAnumber())*Average4;
+		Double Average2 = dataprocess.getAnumber()*dataprocess.getAge3()+(1-dataprocess.getAnumber())*Average3;
+		Double Average1 = dataprocess.getAnumber()*dataprocess.getAge2()+(1-dataprocess.getAnumber())*Average2;
+		
+		if(agenumbner==1) {
+			Average= Double.valueOf(df.format(Average1));
+			Double number = (Math.pow((Double.valueOf(dataprocess.getAge2())-Average),2)+Math.pow((Double.valueOf(dataprocess.getAge3())-Average),2)+Math.pow((Double.valueOf(dataprocess.getAge4())-Average),2)+Math.pow((Double.valueOf(dataprocess.getAge5())-Average),2)+Math.pow((Double.valueOf(dataprocess.getAge6())-Average),2)+Math.pow((Double.valueOf(dataprocess.getAge7())-Average),2)+Math.pow((Double.valueOf(dataprocess.getAge8())-Average),2)+Math.pow((Double.valueOf(dataprocess.getAge9())-Average),2)+Math.pow((Double.valueOf(dataprocess.getAge10())-Average),2))/9;
+			result = Double.valueOf(df.format(Math.sqrt(number)));
+			real = Double.valueOf(dataprocess.getAge1());
+			fx = number;
+		}else if(agenumbner==2) {
+			Average= Double.valueOf(df.format(Average2));
+			Double number = (Math.pow((Double.valueOf(dataprocess.getAge3())-Average),2)+Math.pow((Double.valueOf(dataprocess.getAge4())-Average),2)+Math.pow((Double.valueOf(dataprocess.getAge5())-Average),2)+Math.pow((Double.valueOf(dataprocess.getAge6())-Average),2)+Math.pow((Double.valueOf(dataprocess.getAge7())-Average),2)+Math.pow((Double.valueOf(dataprocess.getAge8())-Average),2)+Math.pow((Double.valueOf(dataprocess.getAge9())-Average),2)+Math.pow((Double.valueOf(dataprocess.getAge10())-Average),2))/8;
+			result = Double.valueOf(df.format(Math.sqrt(number)));
+			real = Double.valueOf(dataprocess.getAge2());
+			fx = number;
+		}else if(agenumbner==3) {
+			Average= Double.valueOf(df.format(Average3));
+			Double number = (Math.pow((Double.valueOf(dataprocess.getAge4())-Average),2)+Math.pow((Double.valueOf(dataprocess.getAge5())-Average),2)+Math.pow((Double.valueOf(dataprocess.getAge6())-Average),2)+Math.pow((Double.valueOf(dataprocess.getAge7())-Average),2)+Math.pow((Double.valueOf(dataprocess.getAge8())-Average),2)+Math.pow((Double.valueOf(dataprocess.getAge9())-Average),2)+Math.pow((Double.valueOf(dataprocess.getAge10())-Average),2))/7;
+			result = Double.valueOf(df.format(Math.sqrt(number)));
+			real = Double.valueOf(dataprocess.getAge3());
+			fx = number;
+		}else if(agenumbner==4) {
+			Average= Double.valueOf(df.format(Average4));
+			Double number = (Math.pow((Double.valueOf(dataprocess.getAge5())-Average),2)+Math.pow((Double.valueOf(dataprocess.getAge6())-Average),2)+Math.pow((Double.valueOf(dataprocess.getAge7())-Average),2)+Math.pow((Double.valueOf(dataprocess.getAge8())-Average),2)+Math.pow((Double.valueOf(dataprocess.getAge9())-Average),2)+Math.pow((Double.valueOf(dataprocess.getAge10())-Average),2))/6;
+			result = Double.valueOf(df.format(Math.sqrt(number)));
+			real = Double.valueOf(dataprocess.getAge4());
+			fx = number;
+		}else if(agenumbner==5) {
+			Average= Double.valueOf(df.format(Average5));
+			Double number = (Math.pow((Double.valueOf(dataprocess.getAge6())-Average),2)+Math.pow((Double.valueOf(dataprocess.getAge7())-Average),2)+Math.pow((Double.valueOf(dataprocess.getAge8())-Average),2)+Math.pow((Double.valueOf(dataprocess.getAge9())-Average),2)+Math.pow((Double.valueOf(dataprocess.getAge10())-Average),2))/5;
+			result = Double.valueOf(df.format(Math.sqrt(number)));
+			real = Double.valueOf(dataprocess.getAge5());
+			fx = number;
+		}else if(agenumbner==6) {
+			Average= Double.valueOf(df.format(Average6));
+			Double number = (Math.pow((Double.valueOf(dataprocess.getAge7())-Average),2)+Math.pow((Double.valueOf(dataprocess.getAge8())-Average),2)+Math.pow((Double.valueOf(dataprocess.getAge9())-Average),2)+Math.pow((Double.valueOf(dataprocess.getAge10())-Average),2))/4;
+			result = Double.valueOf(df.format(Math.sqrt(number)));
+			real = Double.valueOf(dataprocess.getAge6());
+			fx = number;
+		}else if(agenumbner==7) {
+			Average= Double.valueOf(df.format(Average7));
+			Double number = (Math.pow((Double.valueOf(dataprocess.getAge8())-Average),2)+Math.pow((Double.valueOf(dataprocess.getAge9())-Average),2)+Math.pow((Double.valueOf(dataprocess.getAge10())-Average),2))/3;
+			result = Double.valueOf(df.format(Math.sqrt(number)));
+			real = Double.valueOf(dataprocess.getAge7());
+			fx = number;
+		}else if(agenumbner==8) {
+			Average= Double.valueOf(df.format(Average8));
+			Double number = (Math.pow((Double.valueOf(dataprocess.getAge9())-Average),2)+Math.pow((Double.valueOf(dataprocess.getAge10())-Average),2))/2;
+			result = Double.valueOf(df.format(Math.sqrt(number)));
+			real = Double.valueOf(dataprocess.getAge8());
+			fx = number;
+		}else if(agenumbner==9) {
+			Average= Double.valueOf(df.format(Average9));
+			Double number = (Math.pow((Double.valueOf(dataprocess.getAge10())-Average),2))/1;
+			result = Double.valueOf(df.format(Math.sqrt(number)));
+			real = Double.valueOf(dataprocess.getAge9());
+			fx = number;
+		}else if(agenumbner==10) {
+			Average= Double.valueOf(df.format(Average10));
+			Double number = (Math.pow((Double.valueOf(dataprocess.getAge10())-Average),2))/1;
+			result = Double.valueOf(df.format(Math.sqrt(number)));
+			real = Double.valueOf(dataprocess.getAge10());
+			fx = number;
+		}
+		json.put("Average", Average);
+		json.put("result", result);
+		json.put("real", real);
+		json.put("fx", Double.valueOf(df.format(fx)));
+		return json;
+	}	
+	//标准差计算--线性回归法
+	private JSONObject Standarddeviation3(Integer dataprocess_id,Integer agenumbner) throws IOException {
+		JSONObject json = new JSONObject();
+		DecimalFormat df = new DecimalFormat("#.00");
+		Double Average=(double) 0;
+		Double result=(double) 0;
+		Double real=(double) 0;
+		Double fx=(double) 0;
+		dt_dataprocess dataprocess = dt_dataprocessservice.get(dataprocess_id);
+		//预测值
+		Double Average10 = (double) dataprocess.getAge10();
+		Double Average9 = dataprocess.getAnumber()*dataprocess.getAge10()+10;
+		Double Average8 = dataprocess.getAnumber()*dataprocess.getAge9()+10;
+		Double Average7 = dataprocess.getAnumber()*dataprocess.getAge8()+10;
+		Double Average6 = dataprocess.getAnumber()*dataprocess.getAge7()+10;
+		Double Average5 = dataprocess.getAnumber()*dataprocess.getAge6()+10;
+		Double Average4 = dataprocess.getAnumber()*dataprocess.getAge5()+10;
+		Double Average3 = dataprocess.getAnumber()*dataprocess.getAge4()+10;
+		Double Average2 = dataprocess.getAnumber()*dataprocess.getAge3()+10;
+		Double Average1 = dataprocess.getAnumber()*dataprocess.getAge2()+10;
+		
+		if(agenumbner==1) {
+			Average= Double.valueOf(df.format(Average1));
+			Double number = (Math.pow((Double.valueOf(dataprocess.getAge2())-Average),2)+Math.pow((Double.valueOf(dataprocess.getAge3())-Average),2)+Math.pow((Double.valueOf(dataprocess.getAge4())-Average),2)+Math.pow((Double.valueOf(dataprocess.getAge5())-Average),2)+Math.pow((Double.valueOf(dataprocess.getAge6())-Average),2)+Math.pow((Double.valueOf(dataprocess.getAge7())-Average),2)+Math.pow((Double.valueOf(dataprocess.getAge8())-Average),2)+Math.pow((Double.valueOf(dataprocess.getAge9())-Average),2)+Math.pow((Double.valueOf(dataprocess.getAge10())-Average),2))/9;
+			result = Double.valueOf(df.format(Math.sqrt(number)));
+			real = Double.valueOf(dataprocess.getAge1());
+			fx = number;
+		}else if(agenumbner==2) {
+			Average= Double.valueOf(df.format(Average2));
+			Double number = (Math.pow((Double.valueOf(dataprocess.getAge3())-Average),2)+Math.pow((Double.valueOf(dataprocess.getAge4())-Average),2)+Math.pow((Double.valueOf(dataprocess.getAge5())-Average),2)+Math.pow((Double.valueOf(dataprocess.getAge6())-Average),2)+Math.pow((Double.valueOf(dataprocess.getAge7())-Average),2)+Math.pow((Double.valueOf(dataprocess.getAge8())-Average),2)+Math.pow((Double.valueOf(dataprocess.getAge9())-Average),2)+Math.pow((Double.valueOf(dataprocess.getAge10())-Average),2))/8;
+			result = Double.valueOf(df.format(Math.sqrt(number)));
+			real = Double.valueOf(dataprocess.getAge2());
+			fx = number;
+		}else if(agenumbner==3) {
+			Average= Double.valueOf(df.format(Average3));
+			Double number = (Math.pow((Double.valueOf(dataprocess.getAge4())-Average),2)+Math.pow((Double.valueOf(dataprocess.getAge5())-Average),2)+Math.pow((Double.valueOf(dataprocess.getAge6())-Average),2)+Math.pow((Double.valueOf(dataprocess.getAge7())-Average),2)+Math.pow((Double.valueOf(dataprocess.getAge8())-Average),2)+Math.pow((Double.valueOf(dataprocess.getAge9())-Average),2)+Math.pow((Double.valueOf(dataprocess.getAge10())-Average),2))/7;
+			result = Double.valueOf(df.format(Math.sqrt(number)));
+			real = Double.valueOf(dataprocess.getAge3());
+			fx = number;
+		}else if(agenumbner==4) {
+			Average= Double.valueOf(df.format(Average4));
+			Double number = (Math.pow((Double.valueOf(dataprocess.getAge5())-Average),2)+Math.pow((Double.valueOf(dataprocess.getAge6())-Average),2)+Math.pow((Double.valueOf(dataprocess.getAge7())-Average),2)+Math.pow((Double.valueOf(dataprocess.getAge8())-Average),2)+Math.pow((Double.valueOf(dataprocess.getAge9())-Average),2)+Math.pow((Double.valueOf(dataprocess.getAge10())-Average),2))/6;
+			result = Double.valueOf(df.format(Math.sqrt(number)));
+			real = Double.valueOf(dataprocess.getAge4());
+			fx = number;
+		}else if(agenumbner==5) {
+			Average= Double.valueOf(df.format(Average5));
+			Double number = (Math.pow((Double.valueOf(dataprocess.getAge6())-Average),2)+Math.pow((Double.valueOf(dataprocess.getAge7())-Average),2)+Math.pow((Double.valueOf(dataprocess.getAge8())-Average),2)+Math.pow((Double.valueOf(dataprocess.getAge9())-Average),2)+Math.pow((Double.valueOf(dataprocess.getAge10())-Average),2))/5;
+			result = Double.valueOf(df.format(Math.sqrt(number)));
+			real = Double.valueOf(dataprocess.getAge5());
+			fx = number;
+		}else if(agenumbner==6) {
+			Average= Double.valueOf(df.format(Average6));
+			Double number = (Math.pow((Double.valueOf(dataprocess.getAge7())-Average),2)+Math.pow((Double.valueOf(dataprocess.getAge8())-Average),2)+Math.pow((Double.valueOf(dataprocess.getAge9())-Average),2)+Math.pow((Double.valueOf(dataprocess.getAge10())-Average),2))/4;
+			result = Double.valueOf(df.format(Math.sqrt(number)));
+			real = Double.valueOf(dataprocess.getAge6());
+			fx = number;
+		}else if(agenumbner==7) {
+			Average= Double.valueOf(df.format(Average7));
+			Double number = (Math.pow((Double.valueOf(dataprocess.getAge8())-Average),2)+Math.pow((Double.valueOf(dataprocess.getAge9())-Average),2)+Math.pow((Double.valueOf(dataprocess.getAge10())-Average),2))/3;
+			result = Double.valueOf(df.format(Math.sqrt(number)));
+			real = Double.valueOf(dataprocess.getAge7());
+			fx = number;
+		}else if(agenumbner==8) {
+			Average= Double.valueOf(df.format(Average8));
+			Double number = (Math.pow((Double.valueOf(dataprocess.getAge9())-Average),2)+Math.pow((Double.valueOf(dataprocess.getAge10())-Average),2))/2;
+			result = Double.valueOf(df.format(Math.sqrt(number)));
+			real = Double.valueOf(dataprocess.getAge8());
+			fx = number;
+		}else if(agenumbner==9) {
+			Average= Double.valueOf(df.format(Average9));
+			Double number = (Math.pow((Double.valueOf(dataprocess.getAge10())-Average),2))/1;
+			result = Double.valueOf(df.format(Math.sqrt(number)));
+			real = Double.valueOf(dataprocess.getAge9());
+			fx = number;
+		}else if(agenumbner==10) {
+			Average= Double.valueOf(df.format(Average10));
+			Double number = (Math.pow((Double.valueOf(dataprocess.getAge10())-Average),2))/1;
+			result = Double.valueOf(df.format(Math.sqrt(number)));
+			real = Double.valueOf(dataprocess.getAge10());
+			fx = number;
+		}
+		json.put("Average", Average);
+		json.put("result", result);
+		json.put("real", real);
+		json.put("fx", Double.valueOf(df.format(fx)));
+		return json;
+	}
+	//标准差计算--组合预测
+	private JSONObject Standarddeviation4(Integer dataprocess_id,Integer agenumbner) throws IOException {
+		JSONObject json = new JSONObject();
+		DecimalFormat df = new DecimalFormat("#.00");
+		Double Average=(double) 0;
+		Double result=(double) 0;
+		Double real=(double) 0;
+		Double fx=(double) 0;
+		
+		
+		List predictionlist1 = dt_predictionservice.adminfindpredictionfordidandtype(dataprocess_id, 1);
+		List predictionlist2 = dt_predictionservice.adminfindpredictionfordidandtype(dataprocess_id, 2);
+		List predictionlist3 = dt_predictionservice.adminfindpredictionfordidandtype(dataprocess_id, 3);
+		
+		
+		dt_dataprocess dataprocess = dt_dataprocessservice.get(dataprocess_id);
+		if(agenumbner==1) {
+			Double a1 = (double) 0;
+			Double a2 = (double) 0;
+			Double a3 = (double) 0;
+			Double ra = (double) 0;
+			if(predictionlist1.size()>0) {
+				Map map = (Map)predictionlist1.get(0);
+				a1=Double.valueOf(String.valueOf(map.get("bzc1")));
+				if(a1==0) {
+					a1=(double) 10;
+				}
+				ra=Double.valueOf(String.valueOf(map.get("ycz1")));
+			}
+			if(predictionlist2.size()>0) {
+				Map map = (Map)predictionlist2.get(0);
+				a2=Double.valueOf(String.valueOf(map.get("bzc1")));
+			}
+			if(predictionlist3.size()>0) {
+				Map map = (Map)predictionlist3.get(0);
+				a3=Double.valueOf(String.valueOf(map.get("bzc1")));
+			}
+			Average= Double.valueOf(df.format(((a1+a2+a3)/a1)*ra/3));
+			Double number = (Math.pow((Double.valueOf(dataprocess.getAge2())-Average),2)+Math.pow((Double.valueOf(dataprocess.getAge3())-Average),2)+Math.pow((Double.valueOf(dataprocess.getAge4())-Average),2)+Math.pow((Double.valueOf(dataprocess.getAge5())-Average),2)+Math.pow((Double.valueOf(dataprocess.getAge6())-Average),2)+Math.pow((Double.valueOf(dataprocess.getAge7())-Average),2)+Math.pow((Double.valueOf(dataprocess.getAge8())-Average),2)+Math.pow((Double.valueOf(dataprocess.getAge9())-Average),2)+Math.pow((Double.valueOf(dataprocess.getAge10())-Average),2))/9;
+			result = Double.valueOf(df.format(Math.sqrt(number)));
+			real = Double.valueOf(dataprocess.getAge1());
+			fx = number;
+		}else if(agenumbner==2) {
+			Double a1 = (double) 0;
+			Double a2 = (double) 0;
+			Double a3 = (double) 0;
+			Double ra = (double) 0;
+			if(predictionlist1.size()>0) {
+				Map map = (Map)predictionlist1.get(0);
+				a1=Double.valueOf(String.valueOf(map.get("bzc2")));
+				if(a1==0) {
+					a1=(double) 10;
+				}
+				ra=Double.valueOf(String.valueOf(map.get("ycz2")));
+			}
+			if(predictionlist2.size()>0) {
+				Map map = (Map)predictionlist2.get(0);
+				a2=Double.valueOf(String.valueOf(map.get("bzc2")));
+			}
+			if(predictionlist3.size()>0) {
+				Map map = (Map)predictionlist3.get(0);
+				a3=Double.valueOf(String.valueOf(map.get("bzc2")));
+			}
+			Average= Double.valueOf(df.format(((a1+a2+a3)/a1)*ra/3));
+			Double number = (Math.pow((Double.valueOf(dataprocess.getAge3())-Average),2)+Math.pow((Double.valueOf(dataprocess.getAge4())-Average),2)+Math.pow((Double.valueOf(dataprocess.getAge5())-Average),2)+Math.pow((Double.valueOf(dataprocess.getAge6())-Average),2)+Math.pow((Double.valueOf(dataprocess.getAge7())-Average),2)+Math.pow((Double.valueOf(dataprocess.getAge8())-Average),2)+Math.pow((Double.valueOf(dataprocess.getAge9())-Average),2)+Math.pow((Double.valueOf(dataprocess.getAge10())-Average),2))/8;
+			result = Double.valueOf(df.format(Math.sqrt(number)));
+			real = Double.valueOf(dataprocess.getAge2());
+			fx = number;
+		}else if(agenumbner==3) {
+			Double a1 = (double) 0;
+			Double a2 = (double) 0;
+			Double a3 = (double) 0;
+			Double ra = (double) 0;
+			if(predictionlist1.size()>0) {
+				Map map = (Map)predictionlist1.get(0);
+				a1=Double.valueOf(String.valueOf(map.get("bzc3")));
+				if(a1==0) {
+					a1=(double) 10;
+				}
+				ra=Double.valueOf(String.valueOf(map.get("ycz3")));
+			}
+			if(predictionlist2.size()>0) {
+				Map map = (Map)predictionlist2.get(0);
+				a2=Double.valueOf(String.valueOf(map.get("bzc3")));
+			}
+			if(predictionlist3.size()>0) {
+				Map map = (Map)predictionlist3.get(0);
+				a3=Double.valueOf(String.valueOf(map.get("bzc3")));
+			}
+			Average= Double.valueOf(df.format(((a1+a2+a3)/a1)*ra/3));
+			Double number = (Math.pow((Double.valueOf(dataprocess.getAge4())-Average),2)+Math.pow((Double.valueOf(dataprocess.getAge5())-Average),2)+Math.pow((Double.valueOf(dataprocess.getAge6())-Average),2)+Math.pow((Double.valueOf(dataprocess.getAge7())-Average),2)+Math.pow((Double.valueOf(dataprocess.getAge8())-Average),2)+Math.pow((Double.valueOf(dataprocess.getAge9())-Average),2)+Math.pow((Double.valueOf(dataprocess.getAge10())-Average),2))/7;
+			result = Double.valueOf(df.format(Math.sqrt(number)));
+			real = Double.valueOf(dataprocess.getAge3());
+			fx = number;
+		}else if(agenumbner==4) {
+			Double a1 = (double) 0;
+			Double a2 = (double) 0;
+			Double a3 = (double) 0;
+			Double ra = (double) 0;
+			if(predictionlist1.size()>0) {
+				Map map = (Map)predictionlist1.get(0);
+				a1=Double.valueOf(String.valueOf(map.get("bzc4")));
+				if(a1==0) {
+					a1=(double) 10;
+				}
+				ra=Double.valueOf(String.valueOf(map.get("ycz4")));
+			}
+			if(predictionlist2.size()>0) {
+				Map map = (Map)predictionlist2.get(0);
+				a2=Double.valueOf(String.valueOf(map.get("bzc4")));
+			}
+			if(predictionlist3.size()>0) {
+				Map map = (Map)predictionlist3.get(0);
+				a3=Double.valueOf(String.valueOf(map.get("bzc4")));
+			}
+			Average= Double.valueOf(df.format(((a1+a2+a3)/a1)*ra/3));
+			Double number = (Math.pow((Double.valueOf(dataprocess.getAge5())-Average),2)+Math.pow((Double.valueOf(dataprocess.getAge6())-Average),2)+Math.pow((Double.valueOf(dataprocess.getAge7())-Average),2)+Math.pow((Double.valueOf(dataprocess.getAge8())-Average),2)+Math.pow((Double.valueOf(dataprocess.getAge9())-Average),2)+Math.pow((Double.valueOf(dataprocess.getAge10())-Average),2))/6;
+			result = Double.valueOf(df.format(Math.sqrt(number)));
+			real = Double.valueOf(dataprocess.getAge4());
+			fx = number;
+		}else if(agenumbner==5) {
+			Double a1 = (double) 0;
+			Double a2 = (double) 0;
+			Double a3 = (double) 0;
+			Double ra = (double) 0;
+			if(predictionlist1.size()>0) {
+				Map map = (Map)predictionlist1.get(0);
+				a1=Double.valueOf(String.valueOf(map.get("bzc5")));
+				if(a1==0) {
+					a1=(double) 10;
+				}
+				ra=Double.valueOf(String.valueOf(map.get("ycz5")));
+			}
+			if(predictionlist2.size()>0) {
+				Map map = (Map)predictionlist2.get(0);
+				a2=Double.valueOf(String.valueOf(map.get("bzc5")));
+			}
+			if(predictionlist3.size()>0) {
+				Map map = (Map)predictionlist3.get(0);
+				a3=Double.valueOf(String.valueOf(map.get("bzc5")));
+			}
+			Average= Double.valueOf(df.format(((a1+a2+a3)/a1)*ra/3));
+			Double number = (Math.pow((Double.valueOf(dataprocess.getAge6())-Average),2)+Math.pow((Double.valueOf(dataprocess.getAge7())-Average),2)+Math.pow((Double.valueOf(dataprocess.getAge8())-Average),2)+Math.pow((Double.valueOf(dataprocess.getAge9())-Average),2)+Math.pow((Double.valueOf(dataprocess.getAge10())-Average),2))/5;
+			result = Double.valueOf(df.format(Math.sqrt(number)));
+			real = Double.valueOf(dataprocess.getAge5());
+			fx = number;
+		}else if(agenumbner==6) {
+			Double a1 = (double) 0;
+			Double a2 = (double) 0;
+			Double a3 = (double) 0;
+			Double ra = (double) 0;
+			if(predictionlist1.size()>0) {
+				Map map = (Map)predictionlist1.get(0);
+				a1=Double.valueOf(String.valueOf(map.get("bzc6")));
+				if(a1==0) {
+					a1=(double) 10;
+				}
+				ra=Double.valueOf(String.valueOf(map.get("ycz6")));
+			}
+			if(predictionlist2.size()>0) {
+				Map map = (Map)predictionlist2.get(0);
+				a2=Double.valueOf(String.valueOf(map.get("bzc6")));
+			}
+			if(predictionlist3.size()>0) {
+				Map map = (Map)predictionlist3.get(0);
+				a3=Double.valueOf(String.valueOf(map.get("bzc6")));
+			}
+			Average= Double.valueOf(df.format(((a1+a2+a3)/a1)*ra/3));
+			Double number = (Math.pow((Double.valueOf(dataprocess.getAge7())-Average),2)+Math.pow((Double.valueOf(dataprocess.getAge8())-Average),2)+Math.pow((Double.valueOf(dataprocess.getAge9())-Average),2)+Math.pow((Double.valueOf(dataprocess.getAge10())-Average),2))/4;
+			result = Double.valueOf(df.format(Math.sqrt(number)));
+			real = Double.valueOf(dataprocess.getAge6());
+			fx = number;
+		}else if(agenumbner==7) {
+			Double a1 = (double) 0;
+			Double a2 = (double) 0;
+			Double a3 = (double) 0;
+			Double ra = (double) 0;
+			if(predictionlist1.size()>0) {
+				Map map = (Map)predictionlist1.get(0);
+				a1=Double.valueOf(String.valueOf(map.get("bzc7")));
+				if(a1==0) {
+					a1=(double) 10;
+				}
+				ra=Double.valueOf(String.valueOf(map.get("ycz7")));
+			}
+			if(predictionlist2.size()>0) {
+				Map map = (Map)predictionlist2.get(0);
+				a2=Double.valueOf(String.valueOf(map.get("bzc7")));
+			}
+			if(predictionlist3.size()>0) {
+				Map map = (Map)predictionlist3.get(0);
+				a3=Double.valueOf(String.valueOf(map.get("bzc7")));
+			}
+			Average= Double.valueOf(df.format(((a1+a2+a3)/a1)*ra/3));
+			Double number = (Math.pow((Double.valueOf(dataprocess.getAge8())-Average),2)+Math.pow((Double.valueOf(dataprocess.getAge9())-Average),2)+Math.pow((Double.valueOf(dataprocess.getAge10())-Average),2))/3;
+			result = Double.valueOf(df.format(Math.sqrt(number)));
+			real = Double.valueOf(dataprocess.getAge7());
+			fx = number;
+		}else if(agenumbner==8) {
+			Double a1 = (double) 0;
+			Double a2 = (double) 0;
+			Double a3 = (double) 0;
+			Double ra = (double) 0;
+			if(predictionlist1.size()>0) {
+				Map map = (Map)predictionlist1.get(0);
+				a1=Double.valueOf(String.valueOf(map.get("bzc8")));
+				if(a1==0) {
+					a1=(double) 10;
+				}
+				ra=Double.valueOf(String.valueOf(map.get("ycz8")));
+			}
+			if(predictionlist2.size()>0) {
+				Map map = (Map)predictionlist2.get(0);
+				a2=Double.valueOf(String.valueOf(map.get("bzc8")));
+			}
+			if(predictionlist3.size()>0) {
+				Map map = (Map)predictionlist3.get(0);
+				a3=Double.valueOf(String.valueOf(map.get("bzc8")));
+			}
+			Average= Double.valueOf(df.format(((a1+a2+a3)/a1)*ra/3));
+			Double number = (Math.pow((Double.valueOf(dataprocess.getAge9())-Average),2)+Math.pow((Double.valueOf(dataprocess.getAge10())-Average),2))/2;
+			result = Double.valueOf(df.format(Math.sqrt(number)));
+			real = Double.valueOf(dataprocess.getAge8());
+			fx = number;
+		}else if(agenumbner==9) {
+			Double a1 = (double) 0;
+			Double a2 = (double) 0;
+			Double a3 = (double) 0;
+			Double ra = (double) 0;
+			if(predictionlist1.size()>0) {
+				Map map = (Map)predictionlist1.get(0);
+				a1=Double.valueOf(String.valueOf(map.get("bzc9")));
+				if(a1==0) {
+					a1=(double) 10;
+				}
+				ra=Double.valueOf(String.valueOf(map.get("ycz9")));
+			}
+			if(predictionlist2.size()>0) {
+				Map map = (Map)predictionlist2.get(0);
+				a2=Double.valueOf(String.valueOf(map.get("bzc9")));
+			}
+			if(predictionlist3.size()>0) {
+				Map map = (Map)predictionlist3.get(0);
+				a3=Double.valueOf(String.valueOf(map.get("bzc9")));
+			}
+			Average= Double.valueOf(df.format(((a1+a2+a3)/a1)*ra/3));
+			Double number = (Math.pow((Double.valueOf(dataprocess.getAge10())-Average),2))/1;
+			result = Double.valueOf(df.format(Math.sqrt(number)));
+			real = Double.valueOf(dataprocess.getAge9());
+			fx = number;
+		}else if(agenumbner==10) {
+			Double a1 = (double) 0;
+			Double a2 = (double) 0;
+			Double a3 = (double) 0;
+			Double ra = (double) 0;
+			if(predictionlist1.size()>0) {
+				Map map = (Map)predictionlist1.get(0);
+				a1=Double.valueOf(String.valueOf(map.get("bzc10")));
+				if(a1==0) {
+					a1=(double) 10;
+				}
+				ra=Double.valueOf(String.valueOf(map.get("ycz10")));
+			}
+			if(predictionlist2.size()>0) {
+				Map map = (Map)predictionlist2.get(0);
+				a2=Double.valueOf(String.valueOf(map.get("bzc10")));
+			}
+			if(predictionlist3.size()>0) {
+				Map map = (Map)predictionlist3.get(0);
+				a3=Double.valueOf(String.valueOf(map.get("bzc10")));
+			}
+			Average= Double.valueOf(df.format(((a1+a2+a3)/a1)*ra/3));
+			Double number = (Math.pow((Double.valueOf(dataprocess.getAge10())-Average),2))/1;
+			result = Double.valueOf(df.format(Math.sqrt(number)));
+			real = Double.valueOf(dataprocess.getAge10());
+			fx = number;
+		}
+		json.put("Average", Average);
+		json.put("result", result);
+		json.put("real", real);
+		json.put("fx", Double.valueOf(df.format(fx)));
+		return json;
+	}	
+	//Excel生成
+	@RequestMapping(value = "/adminpredictionExcel",produces = "application/json; charset=utf-8")
+	@ResponseBody
+	private String adminpredictionExcel(HttpServletRequest request,HttpServletResponse resp) throws IOException {
+		HttpSession session = request.getSession();
+		resp.setHeader("Access-Control-Allow-Origin", "*");
+		resp.setHeader("Access-Control-Allow-Methods", "GET,POST");
+		JSONObject json = new JSONObject();
+		try{
+			//生成xls表头
+			List<String> header = new ArrayList<String>(); // 第一行数据
+			List<List<String>> body = new ArrayList<List<String>>();
+			header.add("军区编号");
+		    header.add("部队编号");
+			header.add("装备代码");
+		    header.add("器材代码");
+		    header.add("器材名称");
+		    header.add("预测方法");
+		    header.add("预测值(去年消耗)");
+		    header.add("方差(去年消耗)");
+		    header.add("真实值(去年消耗)");
+		    header.add("预测值(今年消耗)");
+		    header.add("方差(今年消耗)");
+		    header.add("真实值(今年消耗)");
+		    header.add("预测值(明年消耗)");
+		    header.add("预测值(后年消耗)");
+		    
+		    List items = dt_predictionservice.adminfindpredictionlist();
+			for(int i=0;i<items.size();i++){
+				Map map = (Map)items.get(i);
+				if(Integer.valueOf(String.valueOf(map.get("ycff")))==1) {
+					map.put("ycffname", "简单移动平均法");
+				}else if(Integer.valueOf(String.valueOf(map.get("ycff")))==2) {
+					map.put("ycffname", "指数平滑法");
+				}else if(Integer.valueOf(String.valueOf(map.get("ycff")))==3) {
+					map.put("ycffname", "线性回归法");
+				}else if(Integer.valueOf(String.valueOf(map.get("ycff")))==4) {
+					map.put("ycffname", "误差平方和倒数组合预测");
+				}
+				//添加xls信息
+				List<String> data = new ArrayList<String>();
+				data.add(String.valueOf(map.get("jqcode")));
+				data.add(String.valueOf(map.get("bdcode")));
+				data.add(String.valueOf(map.get("zbcode")));
+				data.add(String.valueOf(map.get("qccode")));
+				data.add(String.valueOf(map.get("qcname")));
+				data.add(String.valueOf(map.get("ycffname")));
+				data.add(String.valueOf(map.get("ycz9")));
+				data.add(String.valueOf(map.get("fx9")));
+				data.add(String.valueOf(map.get("zsz9")));
+				data.add(String.valueOf(map.get("ycz10")));
+				data.add(String.valueOf(map.get("fx10")));
+				data.add(String.valueOf(map.get("zsz10")));
+				data.add(String.valueOf(map.get("ycz11")));
+				data.add(String.valueOf(map.get("ycz12")));
+		    	body.add(data);
+		    	
+			}
+			//xls输出
+			String loadpath = request.getSession().getServletContext().getRealPath("/") + "..//upload" + File.separator;
+		    //新建文件路径
+		    File file2 = new File(loadpath);
+			if (!file2.exists()) {
+				file2.mkdir();
+			}
+			try(OutputStream out = new FileOutputStream(loadpath+"/"+"预测查询.xls")){
+				createxls.generateExcel("Sheet1", header, body, out);
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+			json.put("code", "100");
+			json.put("info", "生成成功");
+		}catch(Exception e){
+			e.printStackTrace();
+			json.put("code", "400");
+			json.put("info", "系统错误");
+		}
+		return json.toString();
+	}	
+	//预测方法选择
+	@RequestMapping("/adminpredictionycffedit")
+	public String adminpredictionycffedit(HttpServletRequest request, HttpServletResponse resp,Integer dataprocess_id) 
+			throws IOException {
+		dt_dataprocess dataprocess = dt_dataprocessservice.get(dataprocess_id);
+		request.setAttribute("dataprocess", dataprocess);
+		return "admin/predictionycffedit";
+	}
+	@RequestMapping(value = "/adminpredictionycffeditajax",produces = "application/json; charset=utf-8")
+	@ResponseBody
+	private String adminpredictionycffeditajax(HttpServletRequest request,HttpServletResponse resp,
+			Integer dataprocess_id,Integer ycff,Float anumber) throws IOException {
+		HttpSession session = request.getSession();
+		resp.setHeader("Access-Control-Allow-Origin", "*");
+		resp.setHeader("Access-Control-Allow-Methods", "GET,POST");
+		JSONObject json = new JSONObject();
+		try{
+			dt_dataprocess dataprocess = dt_dataprocessservice.get(dataprocess_id);
+			dataprocess.setYcff(ycff);
+			dataprocess.setAnumber(anumber);
+			dt_dataprocessservice.saveOrUpdate(dataprocess);
+			
+			json.put("code", "100");
+			json.put("info", "更改成功");
+		}catch(Exception e){
+			e.printStackTrace();
+			json.put("code", "400");
+			json.put("info", "系统错误");
+		}
+		return json.toString();
+	}
+	
+	
+	
+	@RequestMapping(value = "/test21",produces = "application/json; charset=utf-8")
+	@ResponseBody
+	private String test21(HttpServletRequest request,HttpServletResponse resp) throws IOException {
+		HttpSession session = request.getSession();
+		resp.setHeader("Access-Control-Allow-Origin", "*");
+		resp.setHeader("Access-Control-Allow-Methods", "GET,POST");
+		JSONObject json = new JSONObject();
+		try{
+			for(int i=1;i<201;i++) {
+				dt_prediction prediction = new dt_prediction();
+				prediction.setDataprocess_id(i);
+				prediction.setYcff(4);
+				dt_predictionservice.saveOrUpdate(prediction);
+			}
+			json.put("code", "100");
+			json.put("info", "统计成功，请刷新页面");
+		}catch(Exception e){
+			e.printStackTrace();
+			json.put("code", "400");
+			json.put("info", "系统错误");
+		}
+		return json.toString();
+	}
+}
+
+
+
+
+
+

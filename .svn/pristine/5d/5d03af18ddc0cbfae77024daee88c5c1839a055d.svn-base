@@ -1,0 +1,42 @@
+package com.hd.microblog.service.impl;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.stereotype.Service;
+
+import com.hd.common.dao.IBaseDao;
+import com.hd.common.service.impl.BaseService;
+import com.hd.microblog.dao.dt_sharedpartDao;
+import com.hd.microblog.model.dt_sharedpart;
+import com.hd.microblog.service.dt_sharedpartService;
+@Service("dt_sharedpartService")
+public class dt_sharedpartServiceImpl extends BaseService<dt_sharedpart, Integer> implements dt_sharedpartService{
+	private dt_sharedpartDao dt_sharedpartdao;
+	@Autowired
+	@Qualifier("dt_sharedpartDao")
+	@Override
+	public void setBaseDao(IBaseDao<dt_sharedpart, Integer> dt_sharedpartdao) {
+		this.baseDao = dt_sharedpartdao;
+		this.dt_sharedpartdao = (dt_sharedpartDao) dt_sharedpartdao;
+	}
+	@Override
+	public List adminfindsharedpartlist(Integer start, int number) {
+		// TODO Auto-generated method stub
+		String sql = "select d.*,s.sharedpart_id,s.zbzyd,s.predictionnumber,s.plannumber from dt_dataprocess d left join dt_sharedpart s on d.dataprocess_id=s.dataprocess_id where 1=1 ";
+		sql += " limit ?, ? ";
+		List<Object> paramlist = new ArrayList();
+		paramlist.add(start);
+		paramlist.add(number);
+		return dt_sharedpartdao.exesqlrelist(sql, paramlist);
+	}
+	@Override
+	public List adminfindsharedpartlistcount() {
+		// TODO Auto-generated method stub
+		String sql = "select count(*) count from dt_dataprocess where 1=1 ";
+		return dt_sharedpartdao.exesqlrelist(sql, null);
+	}
+}

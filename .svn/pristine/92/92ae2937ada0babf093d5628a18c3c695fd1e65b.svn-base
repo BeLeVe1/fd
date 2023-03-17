@@ -1,0 +1,25 @@
+package com.hd.microblog.util;
+
+public class contentStrToNo {
+	
+	public boolean Iscontent(String str,Integer no) {
+		
+		if(str.startsWith(",")){
+			str = str.substring(1);
+		}
+		
+		String[] strs = str.split(",");
+		Boolean b=false;
+		for (int i = 0; i < strs.length; i++) {
+			if(no == Integer.parseInt(strs[i])){
+				b=true;
+				
+			}
+			
+		}
+		return b;
+		
+		
+	}
+
+}

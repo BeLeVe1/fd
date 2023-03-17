@@ -1,0 +1,70 @@
+//package com.hd.microblog.web.controller.task;
+//
+//
+//import java.util.List;
+//import java.util.Map;
+//
+//import org.slf4j.Logger;
+//import org.slf4j.LoggerFactory;
+//import org.springframework.beans.factory.annotation.Autowired;
+//import org.springframework.beans.factory.annotation.Qualifier;
+//import org.springframework.scheduling.annotation.Scheduled;    
+//import org.springframework.stereotype.Component;  
+//
+//import com.hd.microblog.model.dt_order;
+//import com.hd.microblog.model.dt_task;
+//import com.hd.microblog.model.dt_usermoney;
+//import com.hd.microblog.service.dt_orderService;
+//import com.hd.microblog.service.dt_taskService;
+//import com.hd.microblog.service.dt_usermoneyService;
+//import com.hd.microblog.web.controller.weixin.WeixinUtil;
+//
+//@Component("TaskJob")  
+//public class TaskJob {  
+//	private static Logger log = LoggerFactory.getLogger(WeixinUtil.class);
+//	
+//	@Autowired
+//	@Qualifier("dt_orderService")
+//	private dt_orderService dt_orderservice;
+//	@Autowired
+//	@Qualifier("dt_taskService")
+//	private dt_taskService dt_taskservice;
+//	@Autowired
+//	@Qualifier("dt_usermoneyService")
+//	private dt_usermoneyService dt_usermoneyservice;
+//	
+//	
+//    @Scheduled(cron = "0 0 0/1 * * ?" )  
+//    public void TaskJob() {//86400一天   3600一小时  43200十二小时
+//    	//当前时间
+//    	Integer newtime=Integer.valueOf(String.valueOf(System.currentTimeMillis() / 1000));
+//    	List orderlist = dt_orderservice.taskfindorderylqlistdt();
+//    	for(int i=0;i<orderlist.size();i++){
+//    		Map map = (Map)orderlist.get(i);
+//    		dt_order order = dt_orderservice.get(Integer.valueOf(String.valueOf(map.get("o_id"))));
+//    		if((newtime-order.getCreatetime())>3600&&order.getStatus()==1){//状态1
+//    			//查询任务
+//    			dt_task task = dt_taskservice.get(order.getT_id());
+//    			if(task!=null) {
+//    				if(task.getC_id()!=2) {
+//        				order.setStatus(0);
+//            			dt_orderservice.saveOrUpdate(order);
+//            			//更新剩余数量+1
+//            			task.setLastnumber(task.getLastnumber()+1);
+//            			dt_taskservice.saveOrUpdate(task);
+//            			dt_usermoney usermoney = new dt_usermoney();
+//        				usermoney.setU_id(order.getU_id());
+//        				usermoney.setStudent(0);
+//        				usermoney.setMoney(0);
+//        				usermoney.setInfo("用户"+order.getU_id()+"取消【"+task.getTaskname()+"】任务，编号"+task.getT_id()+"成功。");
+//        				usermoney.setType(10);
+//        				usermoney.setCreatetime(Integer.valueOf(String.valueOf(System.currentTimeMillis() / 1000)));
+//        				dt_usermoneyservice.saveOrUpdate(usermoney);
+//        			}
+//    			}
+//    		}
+//    	}
+//    	System.out.println("取消任务进行中。。。"); 
+//    	log.info("--------------------取消任务进行中---------------------------");
+//    } 
+//}

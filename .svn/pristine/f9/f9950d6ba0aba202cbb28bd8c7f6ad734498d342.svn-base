@@ -1,0 +1,152 @@
+package com.hd.microblog.model;
+
+import java.io.Serializable;
+
+import javax.persistence.Entity;
+import javax.persistence.Id;
+import javax.persistence.Table;
+
+@Entity
+@Table(name="dt_plan")
+public class dt_plan implements Serializable{
+
+	private static final long serialVersionUID = 1L;
+	@Id
+	public int plan_id;
+	public int dataprocess_id;
+	public String qccode;
+	public String qcname;
+	public String ggjh;
+	public String unit;
+	public double unitprice;
+	public int dzys;
+	public String fg;
+	public double length;
+	public double width;
+	public double height;
+	public double weight;
+	public int predictionnumber;
+	public int plannumber;
+	public int number;
+	public int makingplansnumber;
+	public int thistimeplansnumber;
+	public int lastnumber;
+	public int getPlan_id() {
+		return plan_id;
+	}
+	public void setPlan_id(int plan_id) {
+		this.plan_id = plan_id;
+	}
+	public int getDataprocess_id() {
+		return dataprocess_id;
+	}
+	public void setDataprocess_id(int dataprocess_id) {
+		this.dataprocess_id = dataprocess_id;
+	}
+	public String getQccode() {
+		return qccode;
+	}
+	public void setQccode(String qccode) {
+		this.qccode = qccode;
+	}
+	public String getQcname() {
+		return qcname;
+	}
+	public void setQcname(String qcname) {
+		this.qcname = qcname;
+	}
+	public String getGgjh() {
+		return ggjh;
+	}
+	public void setGgjh(String ggjh) {
+		this.ggjh = ggjh;
+	}
+	public String getUnit() {
+		return unit;
+	}
+	public void setUnit(String unit) {
+		this.unit = unit;
+	}
+	public double getUnitprice() {
+		return unitprice;
+	}
+	public void setUnitprice(double unitprice) {
+		this.unitprice = unitprice;
+	}
+	public int getDzys() {
+		return dzys;
+	}
+	public void setDzys(int dzys) {
+		this.dzys = dzys;
+	}
+	public String getFg() {
+		return fg;
+	}
+	public void setFg(String fg) {
+		this.fg = fg;
+	}
+	public double getLength() {
+		return length;
+	}
+	public void setLength(double length) {
+		this.length = length;
+	}
+	public double getWidth() {
+		return width;
+	}
+	public void setWidth(double width) {
+		this.width = width;
+	}
+	public double getHeight() {
+		return height;
+	}
+	public void setHeight(double height) {
+		this.height = height;
+	}
+	public double getWeight() {
+		return weight;
+	}
+	public void setWeight(double weight) {
+		this.weight = weight;
+	}
+	public int getPredictionnumber() {
+		return predictionnumber;
+	}
+	public void setPredictionnumber(int predictionnumber) {
+		this.predictionnumber = predictionnumber;
+	}
+	public int getPlannumber() {
+		return plannumber;
+	}
+	public void setPlannumber(int plannumber) {
+		this.plannumber = plannumber;
+	}
+	public int getNumber() {
+		return number;
+	}
+	public void setNumber(int number) {
+		this.number = number;
+	}
+	public int getMakingplansnumber() {
+		return makingplansnumber;
+	}
+	public void setMakingplansnumber(int makingplansnumber) {
+		this.makingplansnumber = makingplansnumber;
+	}
+	public int getThistimeplansnumber() {
+		return thistimeplansnumber;
+	}
+	public void setThistimeplansnumber(int thistimeplansnumber) {
+		this.thistimeplansnumber = thistimeplansnumber;
+	}
+	public int getLastnumber() {
+		return lastnumber;
+	}
+	public void setLastnumber(int lastnumber) {
+		this.lastnumber = lastnumber;
+	}
+	public static long getSerialversionuid() {
+		return serialVersionUID;
+	}
+	
+}

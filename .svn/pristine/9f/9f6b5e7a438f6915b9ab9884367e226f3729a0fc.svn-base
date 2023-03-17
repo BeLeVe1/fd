@@ -1,0 +1,35 @@
+package com.hd.common.util;
+
+public class NameValue {
+	//参数名
+	private String name;
+	//参数值
+	private String value;
+	//参与content计算标识
+	private boolean contentFlag;
+	
+	public NameValue(String name, String value, boolean contentFlag) {
+		this.name = name;
+		this.value = value;
+		this.contentFlag = contentFlag;
+	}
+	public boolean isContentFlag() {
+		return contentFlag;
+	}
+	public void setContentFlag(boolean contentFlag) {
+		this.contentFlag = contentFlag;
+	}
+	public String getName() {
+		return name;
+	}
+	public void setName(String name) {
+		this.name = name;
+	}
+	public String getValue() {
+		return value;
+	}
+	public void setValue(String value) {
+		this.value = value;
+	}
+	
+}

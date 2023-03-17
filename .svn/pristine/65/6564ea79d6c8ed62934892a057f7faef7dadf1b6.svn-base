@@ -1,0 +1,86 @@
+//package com.hd.microblog.web.controller.task;
+//
+//
+//import java.text.DecimalFormat;
+//import java.util.List;
+//import java.util.Map;
+//
+//import org.slf4j.Logger;
+//import org.slf4j.LoggerFactory;
+//import org.springframework.beans.factory.annotation.Autowired;
+//import org.springframework.beans.factory.annotation.Qualifier;
+//import org.springframework.scheduling.annotation.Scheduled;    
+//import org.springframework.stereotype.Component;  
+//
+//import com.hd.microblog.model.dt_order;
+//import com.hd.microblog.model.dt_task;
+//import com.hd.microblog.model.dt_user;
+//import com.hd.microblog.model.dt_usermoney;
+//import com.hd.microblog.service.dt_orderService;
+//import com.hd.microblog.service.dt_taskService;
+//import com.hd.microblog.service.dt_userService;
+//import com.hd.microblog.service.dt_usermoneyService;
+//import com.hd.microblog.web.controller.weixin.WeixinUtil;
+//
+//@Component("TaskJob2")  
+//public class TaskJob2 {  
+//	private static Logger log = LoggerFactory.getLogger(WeixinUtil.class);
+//	
+//	@Autowired
+//	@Qualifier("dt_orderService")
+//	private dt_orderService dt_orderservice;
+//	@Autowired
+//	@Qualifier("dt_taskService")
+//	private dt_taskService dt_taskservice;
+//	@Autowired
+//	@Qualifier("dt_userService")
+//	private dt_userService dt_userservice;
+//	@Autowired
+//	@Qualifier("dt_usermoneyService")
+//	private dt_usermoneyService dt_usermoneyservice;
+//	
+//	
+//    @Scheduled(cron = "0 0 6 * * ?" )  
+//    public void TaskJob() {
+//    	DecimalFormat df = new DecimalFormat("#");
+//    	//当前时间
+//    	Integer newtime=Integer.valueOf(String.valueOf(System.currentTimeMillis() / 1000));
+//    	List orderlist = dt_orderservice.adminfindorderlist3();
+//    	for(int i=0;i<orderlist.size();i++){//状态3
+//    		Map map = (Map)orderlist.get(i);
+//    		dt_order order = dt_orderservice.get(Integer.valueOf(String.valueOf(map.get("o_id"))));
+//    		if((newtime-order.getCreatetime())>43200&&order.getStatus()==3){
+//    			//查询任务
+//    			dt_task task = dt_taskservice.get(order.getT_id());
+//    			if(task!=null) {
+//    				if(task.getC_id()!=2) {
+//        				//查询用户
+//            			dt_user user = dt_userservice.get(order.getU_id());
+//            			user.setMoney(user.getMoney()+order.getMoney());
+//            			user.setMoneycount(user.getMoneycount()+order.getMoney());
+//            			user.setNumber(user.getNumber()+1);
+//            			dt_userservice.saveOrUpdate(user);
+//            			//保存用户完成任务记录信息
+//            			dt_usermoney usermoney = new dt_usermoney();
+//            			usermoney.setU_id(user.getU_id());
+//            			usermoney.setStudent(0);
+//            			usermoney.setMoney(order.getMoney()*100);
+//            			usermoney.setInfo("用户"+user.getU_id()+"完成【"+task.getTaskname()+"】任务，编号"+task.getT_id()+"，获得奖励"+df.format(order.getMoney()*100)+"豆。");
+//            			usermoney.setType(1);
+//            			usermoney.setCreatetime(Integer.valueOf(String.valueOf(System.currentTimeMillis() / 1000)));
+//            			dt_usermoneyservice.saveOrUpdate(usermoney);
+//            			//更新订单状态
+//            			order.setStatus(4);
+//            			order.setFinishtime(Integer.valueOf(String.valueOf(System.currentTimeMillis() / 1000)));
+//            			dt_orderservice.saveOrUpdate(order);
+//            			//更新任务完成数量+1
+//            			task.setFinishnumber(task.getFinishnumber()+1);
+//            			dt_taskservice.saveOrUpdate(task);
+//        			}
+//    			}
+//    		}
+//    	}
+//    	System.out.println("审核任务进行中。。。"); 
+//    	log.info("--------------------审核任务进行中---------------------------");
+//    } 
+//}

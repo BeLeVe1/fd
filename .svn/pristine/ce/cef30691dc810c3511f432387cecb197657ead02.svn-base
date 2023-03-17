@@ -1,0 +1,131 @@
+package com.hd.microblog.model;
+
+import java.io.Serializable;
+
+import javax.persistence.Entity;
+import javax.persistence.Id;
+import javax.persistence.Table;
+
+@Entity
+@Table(name="dt_sharedpart")
+public class dt_sharedpart implements Serializable{
+
+	private static final long serialVersionUID = 1L;
+	@Id
+	public int sharedpart_id;
+	public String zbcode;
+	public String zbzyd;
+	public String qccode;
+	public String qcname;
+	public String ggjh;
+	public String unit;
+	public double unitprice;
+	public double dzys;
+	public String fg;
+	public double length;
+	public double width;
+	public double height;
+	public double weight;
+	public double predictionnumber;
+	public double plannumber;
+	public int getSharedpart_id() {
+		return sharedpart_id;
+	}
+	public void setSharedpart_id(int sharedpart_id) {
+		this.sharedpart_id = sharedpart_id;
+	}
+	public String getZbcode() {
+		return zbcode;
+	}
+	public void setZbcode(String zbcode) {
+		this.zbcode = zbcode;
+	}
+	public String getZbzyd() {
+		return zbzyd;
+	}
+	public void setZbzyd(String zbzyd) {
+		this.zbzyd = zbzyd;
+	}
+	public String getQccode() {
+		return qccode;
+	}
+	public void setQccode(String qccode) {
+		this.qccode = qccode;
+	}
+	public String getQcname() {
+		return qcname;
+	}
+	public void setQcname(String qcname) {
+		this.qcname = qcname;
+	}
+	public String getGgjh() {
+		return ggjh;
+	}
+	public void setGgjh(String ggjh) {
+		this.ggjh = ggjh;
+	}
+	public String getUnit() {
+		return unit;
+	}
+	public void setUnit(String unit) {
+		this.unit = unit;
+	}
+	public double getUnitprice() {
+		return unitprice;
+	}
+	public void setUnitprice(double unitprice) {
+		this.unitprice = unitprice;
+	}
+	public double getDzys() {
+		return dzys;
+	}
+	public void setDzys(double dzys) {
+		this.dzys = dzys;
+	}
+	public String getFg() {
+		return fg;
+	}
+	public void setFg(String fg) {
+		this.fg = fg;
+	}
+	public double getLength() {
+		return length;
+	}
+	public void setLength(double length) {
+		this.length = length;
+	}
+	public double getWidth() {
+		return width;
+	}
+	public void setWidth(double width) {
+		this.width = width;
+	}
+	public double getHeight() {
+		return height;
+	}
+	public void setHeight(double height) {
+		this.height = height;
+	}
+	public double getWeight() {
+		return weight;
+	}
+	public void setWeight(double weight) {
+		this.weight = weight;
+	}
+	public double getPredictionnumber() {
+		return predictionnumber;
+	}
+	public void setPredictionnumber(double predictionnumber) {
+		this.predictionnumber = predictionnumber;
+	}
+	public double getPlannumber() {
+		return plannumber;
+	}
+	public void setPlannumber(double plannumber) {
+		this.plannumber = plannumber;
+	}
+	public static long getSerialversionuid() {
+		return serialVersionUID;
+	}
+	
+}

@@ -1,0 +1,21 @@
+package com.hd.microblog.service;
+
+import java.util.List;
+import java.util.Map;
+
+import com.hd.common.service.IBaseService;
+import com.hd.microblog.model.dt_analysis;
+
+
+public interface dt_analysisService  extends IBaseService<dt_analysis, Integer> {
+
+	List adminfindanalysislist(String zbcode,String qccode,String qcname,String fg,String sort,Integer start, int number);
+
+	List adminfindanalysislistcount(String zbcode,String qccode,String qcname,String fg);
+
+	List adminfindanalysislist();
+
+	List adminfindanalysislistall();
+	
+}
+
